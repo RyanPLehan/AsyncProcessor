@@ -1,0 +1,15 @@
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\bin\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.deps.json
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\bin\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\bin\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.pdb
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\bin\Debug\net6.0\AsyncProcessor.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\bin\Debug\net6.0\AsyncProcessor.pdb
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.csproj.AssemblyReference.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.GeneratedMSBuildEditorConfig.editorconfig
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.AssemblyInfoInputs.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.AssemblyInfo.cs
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.csproj.CoreCompileInputs.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.csproj.CopyComplete
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\refint\AsyncProcessor.Azure.ServiceBus.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\AsyncProcessor.Azure.ServiceBus.pdb
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.ServiceBus\obj\Debug\net6.0\ref\AsyncProcessor.Azure.ServiceBus.dll

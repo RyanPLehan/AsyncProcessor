@@ -1,0 +1,12 @@
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\bin\Debug\net6.0\AsyncProcessor.Example.Models.deps.json
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\bin\Debug\net6.0\AsyncProcessor.Example.Models.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\bin\Debug\net6.0\AsyncProcessor.Example.Models.pdb
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\AsyncProcessor.Example.Models.csproj.AssemblyReference.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\AsyncProcessor.Example.Models.GeneratedMSBuildEditorConfig.editorconfig
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\AsyncProcessor.Example.Models.AssemblyInfoInputs.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\AsyncProcessor.Example.Models.AssemblyInfo.cs
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\AsyncProcessor.Example.Models.csproj.CoreCompileInputs.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\AsyncProcessor.Example.Models.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\refint\AsyncProcessor.Example.Models.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\AsyncProcessor.Example.Models.pdb
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Example.Models\obj\Debug\net6.0\ref\AsyncProcessor.Example.Models.dll

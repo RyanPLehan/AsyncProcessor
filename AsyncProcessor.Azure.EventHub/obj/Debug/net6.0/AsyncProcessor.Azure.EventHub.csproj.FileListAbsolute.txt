@@ -1,0 +1,15 @@
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\bin\Debug\net6.0\AsyncProcessor.Azure.EventHub.deps.json
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\bin\Debug\net6.0\AsyncProcessor.Azure.EventHub.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\bin\Debug\net6.0\AsyncProcessor.Azure.EventHub.pdb
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\bin\Debug\net6.0\AsyncProcessor.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\bin\Debug\net6.0\AsyncProcessor.pdb
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\AsyncProcessor.Azure.EventHub.csproj.AssemblyReference.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\AsyncProcessor.Azure.EventHub.GeneratedMSBuildEditorConfig.editorconfig
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\AsyncProcessor.Azure.EventHub.AssemblyInfoInputs.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\AsyncProcessor.Azure.EventHub.AssemblyInfo.cs
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\AsyncProcessor.Azure.EventHub.csproj.CoreCompileInputs.cache
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\AsyncProcessor.Azure.EventHub.csproj.CopyComplete
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\AsyncProcessor.Azure.EventHub.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\refint\AsyncProcessor.Azure.EventHub.dll
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\AsyncProcessor.Azure.EventHub.pdb
+C:\Work\RPL\AsyncProcessor\AsyncProcessor.Azure.EventHub\obj\Debug\net6.0\ref\AsyncProcessor.Azure.EventHub.dll
