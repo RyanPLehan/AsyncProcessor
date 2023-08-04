@@ -6,17 +6,17 @@ namespace AsyncProcessor.Azure.ServiceBus
 {
     public class ErrorEvent : IErrorEvent
     {
-        private readonly ProcessErrorEventArgs Args;
+        private readonly ProcessErrorEventArgs _Args;
 
         internal ErrorEvent(ProcessErrorEventArgs processErrorEventArgs)
         {
-            this.Args = processErrorEventArgs ??
+            this._Args = processErrorEventArgs ??
                 throw new ArgumentNullException(nameof(processErrorEventArgs));
         }
 
-        public object EventData => this.Args;
-        public Exception Exception => this.Args.Exception;
-        public string Partition => this.Args.EntityPath;
+        public object EventData => this._Args;
+        public Exception Exception => this._Args.Exception;
+        public string Partition => this._Args.EntityPath;
 
         internal static ProcessErrorEventArgs ParseArgs(IErrorEvent errorEvent)
         {

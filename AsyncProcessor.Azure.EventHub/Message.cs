@@ -6,23 +6,23 @@ namespace AsyncProcessor.Azure.EventHub
 {
     public class Message : IMessage
     {
-        private readonly EventData ReceivedMessage;
+        private readonly EventData _ReceivedMessage;
 
         internal Message(EventData message)
         {
-            this.ReceivedMessage = message ??
+            this._ReceivedMessage = message ??
                 throw new ArgumentNullException(nameof(message));
         }
 
-        public object MessageData => this.ReceivedMessage;
+        public object MessageData => this._ReceivedMessage;
 
-        public string MessageId => this.ReceivedMessage.MessageId;
+        public string MessageId => this._ReceivedMessage.MessageId;
 
-        public string CorrelationId => this.ReceivedMessage.CorrelationId;
+        public string CorrelationId => this._ReceivedMessage.CorrelationId;
 
-        public string Partition => this.ReceivedMessage.PartitionKey;
+        public string Partition => this._ReceivedMessage.PartitionKey;
 
-        public DateTime EnqueuedTimeUTC => this.ReceivedMessage.EnqueuedTime.UtcDateTime;
+        public DateTime EnqueuedTimeUTC => this._ReceivedMessage.EnqueuedTime.UtcDateTime;
 
 
         internal static EventData ParseMessage(IMessage message)

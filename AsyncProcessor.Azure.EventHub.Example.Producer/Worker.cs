@@ -6,7 +6,7 @@ using AsyncProcessor;
 using AsyncProcessor.Example.Models;
 using System.Timers;
 
-namespace AsyncProcessor.Azure.ServiceBus.Example.Producer
+namespace AsyncProcessor.Azure.EventHub.Example.Producer
 {
     internal class Worker : BackgroundService
     {

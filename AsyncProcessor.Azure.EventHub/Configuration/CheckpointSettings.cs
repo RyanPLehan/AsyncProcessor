@@ -8,6 +8,7 @@ namespace AsyncProcessor.Azure.EventHub.Configuration
 {
     public class CheckpointSettings
     {
+        public int CheckpointIntervalInSeconds { get; set; } = 15;
         public string StorageConnectionString { get; set; }
         public string BlobContainerName { get; set; }
     }

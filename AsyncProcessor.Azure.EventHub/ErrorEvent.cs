@@ -7,16 +7,16 @@ namespace AsyncProcessor.Azure.EventHub
 {
     public class ErrorEvent : IErrorEvent
     {
-        private readonly ProcessErrorEventArgs Args;
+        private readonly ProcessErrorEventArgs _Args;
 
         internal ErrorEvent(ProcessErrorEventArgs processErrorEventArgs)
         {
-            this.Args = processErrorEventArgs;
+            this._Args = processErrorEventArgs;
         }
 
-        public object EventData => this.Args;
-        public Exception Exception => this.Args.Exception;
-        public string Partition => this.Args.PartitionId;
+        public object EventData => this._Args;
+        public Exception Exception => this._Args.Exception;
+        public string Partition => this._Args.PartitionId;
 
         internal static ProcessErrorEventArgs ParseArgs(IErrorEvent errorEvent)
         {

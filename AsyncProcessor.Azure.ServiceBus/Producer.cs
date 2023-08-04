@@ -24,7 +24,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         private readonly IDictionary<string, ServiceBusSender> Senders;
         private readonly object SemaphoreLock = new object();
 
-        private bool disposedValue = false;
+        private bool DisposedValue = false;
 
         public Producer(ILogger<Producer<TMessage>> logger,
                         IOptions<ProducerSettings> settings)
@@ -60,7 +60,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                                   IEnumerable<TMessage> messages,
                                   CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (this.disposedValue)
+            if (this.DisposedValue)
                 throw new ObjectDisposedException(nameof(Producer<TMessage>));
 
             if (String.IsNullOrWhiteSpace(topic))
@@ -93,7 +93,7 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!DisposedValue)
             {
                 if (disposing)
                 {
@@ -104,7 +104,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                 }
 
                 this.Senders.Clear();
-                disposedValue = true;
+                DisposedValue = true;
             }
         }
         #endregion

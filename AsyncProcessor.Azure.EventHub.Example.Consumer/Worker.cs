@@ -6,7 +6,7 @@ using AsyncProcessor;
 using AsyncProcessor.Example.Models;
 
 
-namespace AsyncProcessor.Azure.ServiceBus.Example.Consumer
+namespace AsyncProcessor.Azure.EventHub.Example.Consumer
 {
     internal class Worker : ConsumerWorker<Customer>
     {

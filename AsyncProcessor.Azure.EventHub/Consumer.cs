@@ -17,7 +17,7 @@ using AsyncProcessor.Azure.EventHub.Configuration;
 namespace AsyncProcessor.Azure.EventHub
 {
     /// <summary>
-    /// Consumer to receive messages from a queue service
+    /// Consumer to receive messages from an event hub
     /// </summary>
     /// <typeparam name="TMessage"></typeparam>
     /// <remarks>
@@ -40,12 +40,15 @@ namespace AsyncProcessor.Azure.EventHub
     /// </remarks>
     public class Consumer<TMessage> :  IConsumer<TMessage>, IDisposable
     {
-        private bool disposedValue = false;
+        private object SemaphoreLock = new object();
+        private bool DisposedValue = false;
+        private string SubscribedTo = null;
         private ProcessEventArgs LastEventArgs;
 
         private readonly ILogger Logger;
         private readonly ConsumerSettings Settings;
         private readonly EventProcessorClient Client;
+        private readonly System.Timers.Timer Timer;
 
 
         public Consumer(ILogger<Consumer<TMessage>> logger,
@@ -63,16 +66,18 @@ namespace AsyncProcessor.Azure.EventHub
                 throw new ArgumentNullException(nameof(settings));
 
             this.Client = CreateClient(settings);
+            this.Timer = CreateTimer(settings.CheckpointStore.CheckpointIntervalInSeconds);
+
 
             // Set Default Delegate, just in case
-            this.OnErrorReceived = this.OnErrorReceivedDefault;
+            this.ProcessError = this.ProcessErrorDefault;
         }
 
 
         #region Consumer
-        public Func<IMessageEvent, Task> OnMessageReceived { get; set; }
+        public Func<IMessageEvent, Task> ProcessMessage { get; set; }
 
-        public Func<IErrorEvent, Task> OnErrorReceived { get; set; }
+        public Func<IErrorEvent, Task> ProcessError { get; set; }
 
         public TMessage GetMessage(IMessageEvent messageEvent)
         {
@@ -96,6 +101,7 @@ namespace AsyncProcessor.Azure.EventHub
 
             this.Client.ProcessEventAsync += this.ExecuteProcessEvent;
             this.Client.ProcessErrorAsync += this.ExecuteProcessError;
+            this.SubscribedTo = topic;
             await Resume();
         }
 
@@ -126,15 +132,15 @@ namespace AsyncProcessor.Azure.EventHub
 
 
         #region Message Management
+        public bool IsMessageManagementSupported { get => false; }
+
         public async Task AcknowledgeMessage(IMessageEvent messageEvent)
-        {
-        }
+        { }
 
 
         public async Task DenyAcknowledgement(IMessageEvent messageEvent,
                                               bool requeue = true)
-        {
-        }
+        { }
         #endregion
 
 
@@ -148,16 +154,16 @@ namespace AsyncProcessor.Azure.EventHub
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!DisposedValue)
             {
                 if (disposing)
                 {
                     this.Detach().GetAwaiter().GetResult();
-                    this.OnMessageReceived = null;
-                    this.OnErrorReceived = null;
+                    this.ProcessMessage = null;
+                    this.ProcessError = null;
                 }
 
-                disposedValue = true;
+                DisposedValue = true;
             }
         }
         #endregion
@@ -178,7 +184,7 @@ namespace AsyncProcessor.Azure.EventHub
         {
             EventProcessorClient client = null;
 
-            var storageClient = CreateStorageClient(settings.CheckpointSettings);
+            var storageClient = CreateStorageClient(settings.CheckpointStore);
 
             if (String.IsNullOrWhiteSpace(this.Settings.EventHub))
                 client = new EventProcessorClient(storageClient,
@@ -201,20 +207,33 @@ namespace AsyncProcessor.Azure.EventHub
         }
 
 
+        private System.Timers.Timer CreateTimer(int interval)
+        {
+            System.Timers.Timer timer = new System.Timers.Timer(interval * 1000);
+            timer.Elapsed += async (x, y) => { await this.IssueCheckpoint(); };
+            timer.AutoReset = true;
+            return timer;
+        }
+
+
+
         private async Task ExecuteProcessEvent(ProcessEventArgs processEventArgs)
         {
-            if (OnMessageReceived != null)
+            if (ProcessMessage != null)
             {
+                if (!this.Timer.Enabled)
+                    this.Timer.Start();
+
                 this.LastEventArgs = processEventArgs;
-                await OnMessageReceived(new MessageEvent(processEventArgs));
+                await ProcessMessage(new MessageEvent(processEventArgs));
             }
         }
 
         private async Task ExecuteProcessError(ProcessErrorEventArgs processErrorEventArgs)
         {
-            if (OnErrorReceived != null)
+            if (ProcessError != null)
             {
-                await OnErrorReceived(new ErrorEvent(processErrorEventArgs));
+                await ProcessError(new ErrorEvent(processErrorEventArgs));
             }
         }
 
@@ -223,16 +242,24 @@ namespace AsyncProcessor.Azure.EventHub
         /// </summary>
         /// <param name="loadPostingMessage"></param>
         /// <returns></returns>
-        protected virtual async Task OnErrorReceivedDefault(IErrorEvent errorEvent)
+        protected virtual async Task ProcessErrorDefault(IErrorEvent errorEvent)
+        {
+            this.Logger.LogError(errorEvent.Exception, "Error while processing message on Event Hub: {0}", this.SubscribedTo);
+        }
+
+        private async Task IssueCheckpoint()
         {
             try
             {
-                ProcessErrorEventArgs args = ErrorEvent.ParseArgs(errorEvent);
-                this.Logger.LogError(args.Exception, "Error while processing message on partition: {0}", args.PartitionId);
+                this.Logger.LogInformation("Issuing a Checkpoint on Event Hub {0}", this.Client.EventHubName);
+                await this.LastEventArgs.UpdateCheckpointAsync();
+                this.Timer.Stop();
             }
 
-            catch 
-            { }
+            catch (Exception ex)
+            {
+                this.Logger.LogError(ex, "Error while issuing a Checkpoint on Event Hub {0}", this.Client.EventHubName);
+            }
         }
     }
 }

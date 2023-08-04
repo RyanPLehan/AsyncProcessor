@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using AsyncProcessor;
 
 
-namespace AsyncProcessor.Azure.EventHub.Registration
+namespace AsyncProcessor.Confluent.Kafka.Registration
 {
     public static class ServicesConfiguration
     {

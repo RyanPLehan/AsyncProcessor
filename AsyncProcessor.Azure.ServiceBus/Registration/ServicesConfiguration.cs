@@ -1,6 +1,4 @@
 ﻿using System;
-using Azure.Messaging.ServiceBus;
-using MediatR.Registration;
 using Microsoft.Extensions.DependencyInjection;
 using AsyncProcessor;
 

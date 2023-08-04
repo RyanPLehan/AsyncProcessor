@@ -7,6 +7,6 @@ namespace AsyncProcessor.Azure.EventHub.Configuration
     {
         public string ConsumerGroup { get; set; } = EventHubConsumerClient.DefaultConsumerGroupName;
 
-        public CheckpointSettings CheckpointSettings { get; set; }
+        public CheckpointSettings CheckpointStore { get; set; }
     }
 }

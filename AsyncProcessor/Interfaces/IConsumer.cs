@@ -4,8 +4,8 @@ namespace AsyncProcessor
 {
     public interface IConsumer<TMessage> : ISubscriptionManagement, IMessageManagement
     {
-        Func<IMessageEvent, Task> OnMessageReceived { get; set; }
-        Func<IErrorEvent, Task> OnErrorReceived { get; set; }
+        Func<IMessageEvent, Task> ProcessMessage { get; set; }
+        Func<IErrorEvent, Task> ProcessError { get; set; }
         TMessage GetMessage(IMessageEvent messageEvent);
     }
 }

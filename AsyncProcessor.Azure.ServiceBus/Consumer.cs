@@ -22,8 +22,10 @@ namespace AsyncProcessor.Azure.ServiceBus
     /// </remarks>
     public class Consumer<TMessage> :  IConsumer<TMessage>, IDisposable
     {
+        private bool DisposedValue = false;
         private ServiceBusProcessor Receiver = null;
-        private bool disposedValue = false;
+        private string SubscribedTo = null;
+
         private readonly ILogger Logger;
         private readonly ConsumerSettings Settings;
         private readonly ServiceBusClient Client;
@@ -46,14 +48,14 @@ namespace AsyncProcessor.Azure.ServiceBus
             this.Client = CreateClient(settings);
 
             // Set Default Delegate, just in case
-            this.OnErrorReceived = this.OnErrorReceivedDefault;
+            this.ProcessError = this.ProcessErrorDefault;
         }
 
 
         #region Consumer
-        public Func<IMessageEvent, Task> OnMessageReceived { get; set; }
+        public Func<IMessageEvent, Task> ProcessMessage { get; set; }
 
-        public Func<IErrorEvent, Task> OnErrorReceived { get; set; }
+        public Func<IErrorEvent, Task> ProcessError { get; set; }
 
         public TMessage GetMessage(IMessageEvent messageEvent)
         {
@@ -77,6 +79,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                 this.Receiver = this.Client.CreateProcessor(topic, options);
                 this.Receiver.ProcessMessageAsync += this.ExecuteProcessMessage;
                 this.Receiver.ProcessErrorAsync += this.ExecuteProcessError;
+                this.SubscribedTo = topic;
                 await Resume();
             }
         }
@@ -90,6 +93,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                 this.Receiver = this.Client.CreateProcessor(topic, subscription, options);
                 this.Receiver.ProcessMessageAsync += this.ExecuteProcessMessage;
                 this.Receiver.ProcessErrorAsync += this.ExecuteProcessError;
+                this.SubscribedTo = topic;
                 await Resume();
             }
         }
@@ -121,6 +125,8 @@ namespace AsyncProcessor.Azure.ServiceBus
 
 
         #region Message Management
+        public bool IsMessageManagementSupported { get => true; }
+
         public async Task AcknowledgeMessage(IMessageEvent messageEvent)
         {
             ArgumentNullException.ThrowIfNull(messageEvent);
@@ -166,18 +172,18 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!DisposedValue)
             {
                 if (disposing)
                 {
                     this.Detach().GetAwaiter().GetResult();
                     this.Client.DisposeAsync().GetAwaiter().GetResult();
 
-                    this.OnMessageReceived = null;
-                    this.OnErrorReceived = null;
+                    this.ProcessMessage = null;
+                    this.ProcessError = null;
                 }
 
-                disposedValue = true;
+                DisposedValue = true;
             }
         }
         #endregion
@@ -202,17 +208,17 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         private async Task ExecuteProcessMessage(ProcessMessageEventArgs processMessageEventArgs)
         {
-            if (OnMessageReceived != null)
+            if (ProcessMessage != null)
             {
-                await OnMessageReceived(new MessageEvent(processMessageEventArgs));
+                await ProcessMessage(new MessageEvent(processMessageEventArgs));
             }
         }
 
         private async Task ExecuteProcessError(ProcessErrorEventArgs processErrorEventArgs)
         {
-            if (OnErrorReceived != null)
+            if (ProcessError != null)
             {
-                await OnErrorReceived(new ErrorEvent(processErrorEventArgs));
+                await ProcessError(new ErrorEvent(processErrorEventArgs));
             }
         }
 
@@ -244,22 +250,16 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// </summary>
         /// <param name="errorEvent"></param>
         /// <returns></returns>
-        protected virtual async Task OnErrorReceivedDefault(IErrorEvent errorEvent)
+        protected virtual async Task ProcessErrorDefault(IErrorEvent errorEvent)
         {
-            try
-            {
-                ProcessErrorEventArgs args = ErrorEvent.ParseArgs(errorEvent);
+            ProcessErrorEventArgs args = ErrorEvent.ParseArgs(errorEvent);
 
-                // Do not log if message was locked
-                bool isMessageLockLostException = (errorEvent.Exception is ServiceBusException) &&
-                                                   errorEvent.Exception.Message.Contains("(MessageLockLost)", StringComparison.OrdinalIgnoreCase);
+            // Do not log if message was locked
+            bool isMessageLockLostException = (errorEvent.Exception is ServiceBusException) &&
+                                                errorEvent.Exception.Message.Contains("(MessageLockLost)", StringComparison.OrdinalIgnoreCase);
 
-                if (!isMessageLockLostException)
-                    this.Logger.LogError(errorEvent.Exception, "Error while processing message on {0}", args.EntityPath);
-            }
-
-            catch 
-            { }
+            if (!isMessageLockLostException)
+                this.Logger.LogError(errorEvent.Exception, "Error while processing message on Queue/Topic: {0}", this.SubscribedTo);
         }
     }
 }

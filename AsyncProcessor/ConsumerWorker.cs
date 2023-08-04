@@ -26,7 +26,8 @@ namespace AsyncProcessor
             this.Consumer = consumer ??
                 throw new ArgumentNullException(nameof(consumer));
 
-            this.Consumer.OnMessageReceived = this.OnMessageReceived;
+            this.Consumer.ProcessMessage = this.ExecuteProcessMessage;
+            // this.Consumer.ProcessError = this.ExecuteProcessError;
         }
 
         #region Abstraction Definitions
@@ -35,10 +36,9 @@ namespace AsyncProcessor
 
 
         #region Accessors/Mutators
-        protected virtual string? WorkerName
-        {
-            get => this.GetType().FullName;
-        }
+        protected virtual string? WorkerName => this.GetType().FullName;
+
+        protected virtual bool RequeueMessageOnFailure => false;
         #endregion
 
 
@@ -87,7 +87,7 @@ namespace AsyncProcessor
         /// </summary>
         /// <param name="messageEvent"></param>
         /// <returns></returns>
-        protected virtual async Task OnMessageReceived(IMessageEvent messageEvent)
+        protected virtual async Task ExecuteProcessMessage(IMessageEvent messageEvent)
         {
             try
             {
@@ -97,7 +97,9 @@ namespace AsyncProcessor
 
                 var notification = new MessageReceivedNotification<TMessage> { Message = message };
                 await this.Mediator.Publish(notification);
-                await this.Consumer.AcknowledgeMessage(messageEvent);  // Manual Acknowledgement
+
+                if (this.Consumer.IsMessageManagementSupported)
+                    await this.Consumer.AcknowledgeMessage(messageEvent);  // Manual Acknowledgement
 
                 this.Logger.LogInformation("{0} processed a message with ID {1}.  Returning Successful Acknowledgment.", this.WorkerName, messageEvent.Message.MessageId);
             }
@@ -105,8 +107,26 @@ namespace AsyncProcessor
             catch (Exception ex)
             {
                 this.Logger.LogError(ex, "Exception while handling event: {0}.  Returning Deny Acknowledgment", ex.Message);
-                await this.Consumer.DenyAcknowledgement(messageEvent, true);  // Manual Acknowledgement
+
+                if (this.Consumer.IsMessageManagementSupported)
+                    await this.Consumer.DenyAcknowledgement(messageEvent, this.RequeueMessageOnFailure);  // Manual Acknowledgement
             }
+        }
+
+        /// <summary>
+        /// Receive and process message
+        /// </summary>
+        /// <param name="messageEvent"></param>
+        /// <returns></returns>
+        protected virtual async Task ExecuteProcessError(IErrorEvent errorEvent)
+        {
+            try
+            {
+                this.Logger.LogError(errorEvent.Exception, "{0} encountered an unexpected error.", this.WorkerName);
+            }
+
+            catch
+            { }
         }
         #endregion
 

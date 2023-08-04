@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Azure.Messaging.EventHubs;
+using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AsyncProcessor;
 using AsyncProcessor.Formatters;
-using AsyncProcessor.Azure.EventHub.Configuration;
-using Azure.Messaging.EventHubs.Producer;
-using System.Collections.Concurrent;
+using AsyncProcessor.Confluent.Kafka.Configuration;
 
-namespace AsyncProcessor.Azure.EventHub
+namespace AsyncProcessor.Confluent.Kafka
 {
     /// <summary>
     /// Producer to publish a message on a Queue service
@@ -21,7 +19,7 @@ namespace AsyncProcessor.Azure.EventHub
     {
         private readonly ILogger Logger;
         private readonly ProducerSettings Settings;
-        private readonly EventHubProducerClient Client;
+        private readonly IProducer<Null, string> Client;
 
         private bool DisposedValue = false;
 
@@ -78,13 +76,11 @@ namespace AsyncProcessor.Azure.EventHub
             if (!messages.Any())
                 return;
 
-            // Ensure that topic is the same as the event hub, if supplied.
-            if (!String.IsNullOrWhiteSpace(topic) &&
-                !this.Client.EventHubName.Equals(topic.Trim(), StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("When topic is supplied, it must match Azure Event Hub name");
-
-            var eventData = CreateEventData(messages);
-            await this.Client.SendAsync(eventData, cancellationToken);
+            DeliveryResult<Null, string> result;
+            foreach (TMessage message in messages)
+            {
+                result = await this.Client.ProduceAsync(topic, CreateMessage(message), cancellationToken);
+            }
         }
 
 
@@ -103,7 +99,7 @@ namespace AsyncProcessor.Azure.EventHub
             {
                 if (disposing)
                 {
-                    this.Client.DisposeAsync().GetAwaiter().GetResult();
+                    this.Client.Dispose();
                 }
 
                 DisposedValue = true;
@@ -112,38 +108,30 @@ namespace AsyncProcessor.Azure.EventHub
         #endregion
 
         /// <summary>
-        /// Create Event Hub Producer Client
+        /// Create Kafka Producer Client
         /// </summary>
         /// <remarks>
         /// For optimal performace the client will be instantiated once
-        /// See https://learn.microsoft.com/en-us/dotnet/api/azure.messaging.eventhubs.producer.eventhubproducerclient?view=azure-dotnet
         /// Since this class is registered as a singleton, we can safely initialize the cliet once.
         /// However, in this case we don't want to register the client via dependency injection as a singleton because the consumer and producer could have different connections
         /// </remarks>
         /// <param name="settings"></param>
         /// <returns></returns>
-        private EventHubProducerClient CreateClient(ConnectionSettings settings)
+        private IProducer<Null, string> CreateClient(ConnectionSettings settings)
         {
-            EventHubProducerClient client = null;
+            var config = new ProducerConfig(settings.ConnectionProperties);
+            var builder = new ProducerBuilder<Null, string>(config);
 
-            if (String.IsNullOrWhiteSpace(this.Settings.EventHub))
-                client = new EventHubProducerClient(this.Settings.ConnectionString);
-            else
-                client = new EventHubProducerClient(this.Settings.ConnectionString,
-                                                    this.Settings.EventHub);
-
-            return client;
+            return builder.Build();
         }
 
 
-        private IEnumerable<EventData> CreateEventData<T>(IEnumerable<T> messages)
+        private Message<Null, string> CreateMessage(TMessage message)
         {
-            IList<EventData> eventData = new List<EventData>();
-
-            foreach (T message in messages)
-                eventData.Add(new EventData(Json.Serialize(message)));
-
-            return eventData;
+            return new Message<Null, string>()
+            {
+                Value = Json.Serialize(message),
+            };
         }
     }
 }

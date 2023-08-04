@@ -6,17 +6,17 @@ namespace AsyncProcessor.Azure.ServiceBus
 {
     public class MessageEvent : IMessageEvent
     {
-        private readonly ProcessMessageEventArgs Args;
+        private readonly ProcessMessageEventArgs _Args;
 
         internal MessageEvent(ProcessMessageEventArgs processMessageEventArgs)
         {
-            this.Args = processMessageEventArgs ??
+            this._Args = processMessageEventArgs ??
                 throw new ArgumentNullException(nameof(processMessageEventArgs));
         }
 
-        public object EventData => this.Args;
+        public object EventData => this._Args;
 
-        public IMessage Message => new Message(this.Args.Message);
+        public IMessage Message => new Message(this._Args.Message);
 
 
         internal static ProcessMessageEventArgs ParseArgs(IMessageEvent messageEvent)
