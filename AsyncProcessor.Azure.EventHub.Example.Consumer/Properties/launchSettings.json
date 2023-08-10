@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AsyncProcessor.Azure.EventHub.Example.Consumer": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

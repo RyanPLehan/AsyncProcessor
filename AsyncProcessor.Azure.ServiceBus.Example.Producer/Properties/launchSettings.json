@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AsyncProcessor.Azure.ServiceBus.Example.Producer": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

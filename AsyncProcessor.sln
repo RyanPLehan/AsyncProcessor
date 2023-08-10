@@ -9,17 +9,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncProcessor", "AsyncProc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncProcessor.Azure.EventHub", "AsyncProcessor.Azure.EventHub\AsyncProcessor.Azure.EventHub.csproj", "{292E128E-5487-479A-9835-FDA6A11ED670}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncProcessor.Azure.ServiceBus.Example.Producer", "AsyncProcessor.Azure.ServiceBus.Example.Producer\AsyncProcessor.Azure.ServiceBus.Example.Producer.csproj", "{8AFB5CA6-1B2C-4FCC-9E18-D7201EB9C01C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncProcessor.Azure.ServiceBus.Example.Producer", "AsyncProcessor.Azure.ServiceBus.Example.Producer\AsyncProcessor.Azure.ServiceBus.Example.Producer.csproj", "{8AFB5CA6-1B2C-4FCC-9E18-D7201EB9C01C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncProcessor.Example.Models", "AsyncProcessor.Example.Models\AsyncProcessor.Example.Models.csproj", "{BB28835D-5E71-4497-BD59-A2BFF63DB42F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncProcessor.Example.Models", "AsyncProcessor.Example.Models\AsyncProcessor.Example.Models.csproj", "{BB28835D-5E71-4497-BD59-A2BFF63DB42F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncProcessor.Azure.ServiceBus.Example.Consumer", "AsyncProcessor.Azure.ServiceBus.Example.Consumer\AsyncProcessor.Azure.ServiceBus.Example.Consumer.csproj", "{A1D0A4F8-7AF8-4412-B0E9-7A0D448FB496}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncProcessor.Azure.ServiceBus.Example.Consumer", "AsyncProcessor.Azure.ServiceBus.Example.Consumer\AsyncProcessor.Azure.ServiceBus.Example.Consumer.csproj", "{A1D0A4F8-7AF8-4412-B0E9-7A0D448FB496}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncProcessor.Azure.EventHub.Example.Producer", "AsyncProcessor.Azure.EventHub.Example.Producer\AsyncProcessor.Azure.EventHub.Example.Producer.csproj", "{DFD66B76-C210-43D0-A8FF-85EB489EB42E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncProcessor.Azure.EventHub.Example.Producer", "AsyncProcessor.Azure.EventHub.Example.Producer\AsyncProcessor.Azure.EventHub.Example.Producer.csproj", "{DFD66B76-C210-43D0-A8FF-85EB489EB42E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncProcessor.Azure.EventHub.Example.Consumer", "AsyncProcessor.Azure.EventHub.Example.Consumer\AsyncProcessor.Azure.EventHub.Example.Consumer.csproj", "{1EC07B27-D68E-4618-997C-A0E556057BC2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncProcessor.Azure.EventHub.Example.Consumer", "AsyncProcessor.Azure.EventHub.Example.Consumer\AsyncProcessor.Azure.EventHub.Example.Consumer.csproj", "{1EC07B27-D68E-4618-997C-A0E556057BC2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncProcessor.Confluent.Kafka", "AsyncProcessor.Confluent.Kafka\AsyncProcessor.Confluent.Kafka.csproj", "{76C087F2-5843-4266-B6C4-0DF79DA88BA6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncProcessor.Confluent.Kafka", "AsyncProcessor.Confluent.Kafka\AsyncProcessor.Confluent.Kafka.csproj", "{76C087F2-5843-4266-B6C4-0DF79DA88BA6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncProcessor.Confluent.Kafka.Example.Producer", "AsyncProcessor.Confluent.Kafka.Example.Producer\AsyncProcessor.Confluent.Kafka.Example.Producer.csproj", "{BA0EA8A8-692A-4985-A5FC-5826690AF8DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncProcessor.Confluent.Kafka.Example.Consumer", "AsyncProcessor.Confluent.Kafka.Example.Consumer\AsyncProcessor.Confluent.Kafka.Example.Consumer.csproj", "{F16E7C6C-6540-4ADF-AC26-95D496C89CC9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +67,14 @@ Global
 		{76C087F2-5843-4266-B6C4-0DF79DA88BA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{76C087F2-5843-4266-B6C4-0DF79DA88BA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{76C087F2-5843-4266-B6C4-0DF79DA88BA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA0EA8A8-692A-4985-A5FC-5826690AF8DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA0EA8A8-692A-4985-A5FC-5826690AF8DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA0EA8A8-692A-4985-A5FC-5826690AF8DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA0EA8A8-692A-4985-A5FC-5826690AF8DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F16E7C6C-6540-4ADF-AC26-95D496C89CC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F16E7C6C-6540-4ADF-AC26-95D496C89CC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F16E7C6C-6540-4ADF-AC26-95D496C89CC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F16E7C6C-6540-4ADF-AC26-95D496C89CC9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
