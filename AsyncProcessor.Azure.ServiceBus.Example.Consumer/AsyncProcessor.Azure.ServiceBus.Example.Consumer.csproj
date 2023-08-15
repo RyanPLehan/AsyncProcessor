@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>6d6dd0d2-889f-4ef3-9dc8-6174c84da24d</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileRunEnvironmentFiles>DockerDebugSettings.env</DockerfileRunEnvironmentFiles>
   </PropertyGroup>
 
 	<ItemGroup>
@@ -18,7 +19,7 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="7.0.1" />
-		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
 	</ItemGroup>
 
 	<ItemGroup>

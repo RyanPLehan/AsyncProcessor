@@ -95,11 +95,13 @@ namespace AsyncProcessor.Confluent.Kafka
             this.Client.Close();
         }
 
-        public async Task Pause()
+        public Task Pause()
         {
             this.ProcessServiceCancellationTokenSource.Cancel();
             this.ClientProcessService.ProcessEvent -= this.ExecuteProcessEvent;
             this.ClientProcessService.ProcessError -= this.ExecuteProcessError;
+
+            return Task.CompletedTask;
         }
 
         public async Task Resume()
@@ -124,12 +126,16 @@ namespace AsyncProcessor.Confluent.Kafka
         #region Message Management
         public bool IsMessageManagementSupported { get => false; }
 
-        public async Task AcknowledgeMessage(IMessageEvent messageEvent)
-        { }
+        public Task AcknowledgeMessage(IMessageEvent messageEvent)
+        {
+            return Task.CompletedTask;
+        }
 
-        public async Task DenyAcknowledgement(IMessageEvent messageEvent,
-                                              bool requeue = true)
-        { }
+        public Task DenyAcknowledgement(IMessageEvent messageEvent,
+                                        bool requeue = true)
+        {
+            return Task.CompletedTask;
+        }
         #endregion
 
 
@@ -201,9 +207,10 @@ namespace AsyncProcessor.Confluent.Kafka
         /// </summary>
         /// <param name="loadPostingMessage"></param>
         /// <returns></returns>
-        protected virtual async Task ProcessErrorDefault(IErrorEvent errorEvent)
+        protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
         {
             this.Logger.LogError(errorEvent.Exception, "Error while processing message on Topic: {0}", this.SubscribedTo);
+            return Task.CompletedTask;
         }
     }
 }

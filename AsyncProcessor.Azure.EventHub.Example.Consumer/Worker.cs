@@ -11,15 +11,12 @@ namespace AsyncProcessor.Azure.EventHub.Example.Consumer
     internal class Worker : ConsumerWorker<Customer>
     {
         private const string Topic = "proof_of_concept";            // Queue Name or Topic Name
-        private readonly ILogger Logger;
 
         public Worker(ILogger<Worker> logger,
                       IMediator mediator,
                       IConsumer<Customer> consumer)
             :base(logger, mediator, consumer)
         {
-            this.Logger = logger ??
-                throw new ArgumentNullException(nameof(logger));
         }
 
         #region Override ConsumerWorker

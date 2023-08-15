@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using Microsoft.Extensions.Hosting;
@@ -118,7 +119,7 @@ namespace AsyncProcessor
         /// </summary>
         /// <param name="messageEvent"></param>
         /// <returns></returns>
-        protected virtual async Task ExecuteProcessError(IErrorEvent errorEvent)
+        protected virtual Task ExecuteProcessError(IErrorEvent errorEvent)
         {
             try
             {
@@ -127,6 +128,8 @@ namespace AsyncProcessor
 
             catch
             { }
+
+            return Task.CompletedTask;
         }
         #endregion
 

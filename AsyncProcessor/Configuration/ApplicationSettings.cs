@@ -16,16 +16,15 @@ namespace AsyncProcessor.Configuration
             string appEnv = EnvironmentSettings.ApplicationEnvironment();
 
             var path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            var settingsPath = Path.Combine(path, "Settings");
 
             var file = $"appsettings.json";
-            builder.AddJsonFile(Path.Combine(settingsPath, file), true, true);
+            builder.AddJsonFile(Path.Combine(path, file), true, true);
 
 
             if (!String.IsNullOrWhiteSpace(appEnv))
             {
                 file = $"appsettings.{appEnv}.json";
-                builder.AddJsonFile(Path.Combine(settingsPath, file), true, true);
+                builder.AddJsonFile(Path.Combine(path, file), true, true);
             }
 
             // See following reference for incorporating user secrets

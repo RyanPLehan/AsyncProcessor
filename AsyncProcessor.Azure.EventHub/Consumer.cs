@@ -134,13 +134,17 @@ namespace AsyncProcessor.Azure.EventHub
         #region Message Management
         public bool IsMessageManagementSupported { get => false; }
 
-        public async Task AcknowledgeMessage(IMessageEvent messageEvent)
-        { }
+        public Task AcknowledgeMessage(IMessageEvent messageEvent)
+        {
+            return Task.CompletedTask;
+        }
 
 
-        public async Task DenyAcknowledgement(IMessageEvent messageEvent,
-                                              bool requeue = true)
-        { }
+        public Task DenyAcknowledgement(IMessageEvent messageEvent,
+                                        bool requeue = true)
+        {
+            return Task.CompletedTask;
+        }
         #endregion
 
 
@@ -242,9 +246,10 @@ namespace AsyncProcessor.Azure.EventHub
         /// </summary>
         /// <param name="loadPostingMessage"></param>
         /// <returns></returns>
-        protected virtual async Task ProcessErrorDefault(IErrorEvent errorEvent)
+        protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
         {
             this.Logger.LogError(errorEvent.Exception, "Error while processing message on Event Hub: {0}", this.SubscribedTo);
+            return Task.CompletedTask;
         }
 
         private async Task IssueCheckpoint()

@@ -250,7 +250,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// </summary>
         /// <param name="errorEvent"></param>
         /// <returns></returns>
-        protected virtual async Task ProcessErrorDefault(IErrorEvent errorEvent)
+        protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
         {
             ProcessErrorEventArgs args = ErrorEvent.ParseArgs(errorEvent);
 
@@ -260,6 +260,8 @@ namespace AsyncProcessor.Azure.ServiceBus
 
             if (!isMessageLockLostException)
                 this.Logger.LogError(errorEvent.Exception, "Error while processing message on Queue/Topic: {0}", this.SubscribedTo);
+
+            return Task.CompletedTask;
         }
     }
 }

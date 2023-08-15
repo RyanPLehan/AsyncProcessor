@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using AsyncProcessor;
 using AsyncProcessor.Example.Models;
-using System.Timers;
+
 
 namespace AsyncProcessor.Azure.ServiceBus.Example.Producer
 {
@@ -50,11 +53,11 @@ namespace AsyncProcessor.Azure.ServiceBus.Example.Producer
 
 
         /// <summary>
-        /// Setup connection to TQL Pub Sub
+        /// 
         /// </summary>
         /// <param name="stoppingToken"></param>
         /// <returns></returns>
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
             {
@@ -66,6 +69,8 @@ namespace AsyncProcessor.Azure.ServiceBus.Example.Producer
             {
                 this.Logger.LogError(ex, "{0} encountered an exception while publishing to Queue/Topic ({1})", WorkerName, Topic);
             }
+
+            return Task.CompletedTask;
         }
         #endregion
 
