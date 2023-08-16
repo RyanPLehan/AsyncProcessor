@@ -18,9 +18,9 @@ namespace AsyncProcessor.Azure.ServiceBus
     /// </remarks>
     public class Producer<TMessage> : IProducer<TMessage>, IDisposable
     {
-        private readonly ILogger Logger;
-        private readonly ProducerSettings Settings;
-        private readonly ServiceBusClient Client;
+        private readonly ILogger _logger;
+        private readonly ProducerSettings _settings;
+        private readonly ServiceBusClient _client;
         private readonly IDictionary<string, ServiceBusSender> Senders;
         private readonly object SemaphoreLock = new object();
 
@@ -36,13 +36,13 @@ namespace AsyncProcessor.Azure.ServiceBus
         public Producer(ILogger<Producer<TMessage>> logger,
                         ProducerSettings settings)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
 
-            this.Settings = settings ??
+            this._settings = settings ??
                 throw new ArgumentNullException(nameof(settings));
 
-            this.Client = CreateClient(settings);
+            this._client = CreateClient(settings);
 
             this.Senders = new Dictionary<string, ServiceBusSender>(StringComparer.OrdinalIgnoreCase);
         }
@@ -100,7 +100,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                     foreach (ServiceBusSender sender in this.Senders.Values)
                         sender.DisposeAsync().GetAwaiter().GetResult();
 
-                    this.Client.DisposeAsync().GetAwaiter().GetResult();
+                    this._client.DisposeAsync().GetAwaiter().GetResult();
                 }
 
                 this.Senders.Clear();
@@ -122,7 +122,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// <returns></returns>
         private ServiceBusClient CreateClient(ConnectionSettings settings)
         {
-            return new ServiceBusClient(this.Settings.ConnectionString);
+            return new ServiceBusClient(this._settings.ConnectionString);
         }
 
 
@@ -160,7 +160,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                     // If no connection or has become disconnected, get one
                     if (!hasSender || isConnectionClosed)
                     {
-                        ret = this.Client.CreateSender(topic);
+                        ret = this._client.CreateSender(topic);
                         this.Senders.Add(topic, ret);
                     }
                 }
@@ -168,7 +168,7 @@ namespace AsyncProcessor.Azure.ServiceBus
 
             catch (Exception ex)
             {
-                this.Logger.LogError(ex, "Unable to create producer for queue/topic {0}", topic.ToString());
+                this._logger.LogError(ex, "Unable to create producer for queue/topic {0}", topic.ToString());
             }
 
             return ret;

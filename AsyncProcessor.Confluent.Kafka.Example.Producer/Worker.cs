@@ -13,41 +13,42 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Producer
 {
     internal class Worker : BackgroundService
     {
-        private const string WorkerName = "Producer";
-        private const string Topic = "proof_of_concept";            // Queue Name or Topic Name
-        private readonly ILogger Logger;
-        private readonly IProducer<Customer> Producer;
+        private const string WORKER_NAME = "Producer";
+        private const string TOPIC = "proof_of_concept";            // Queue Name or Topic Name
 
-        private System.Timers.Timer Timer;
-        private Random Random = new Random();
+        private readonly ILogger _logger;
+        private readonly IProducer<Customer> _producer;
+
+        private System.Timers.Timer _timer;
+        private Random _random = new Random();
 
         public Worker(ILogger<Worker> logger,
                       IProducer<Customer> producer)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
 
-            this.Producer = producer ??
+            this._producer = producer ??
                 throw new ArgumentNullException(nameof(producer));
         }
 
         #region Override BackgroundService Methods
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            var msg = String.Format("{0} starting.", WorkerName);
-            this.Logger.LogInformation(msg);
+            var msg = String.Format("{0} starting.", WORKER_NAME);
+            this._logger.LogInformation(msg);
 
-            this.Timer = CreateTimer(5000);
+            this._timer = CreateTimer(5000);
             return base.StartAsync(cancellationToken);
         }
 
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            var msg = String.Format("{0} stopping", WorkerName);
-            this.Logger.LogInformation(msg);
+            var msg = String.Format("{0} stopping", WORKER_NAME);
+            this._logger.LogInformation(msg);
 
-            TeardownTimer(this.Timer);
+            TeardownTimer(this._timer);
             return base.StopAsync(cancellationToken);
         }
 
@@ -62,12 +63,12 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Producer
             try
             {
                 // Use timer to slow down process of publishing messages
-                this.Timer.Start();
+                this._timer.Start();
             }
 
             catch (Exception ex)
             {
-                this.Logger.LogError(ex, "{0} encountered an exception while publishing to Queue/Topic ({1})", WorkerName, Topic);
+                this._logger.LogError(ex, "{0} encountered an exception while publishing to Queue/Topic ({1})", WORKER_NAME, TOPIC);
             }
 
             return Task.CompletedTask;
@@ -100,20 +101,20 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Producer
         /// <returns></returns>
         private async Task PublishCustomers()
         {
-            int numOfMsgs = this.Random.Next(30);
+            int numOfMsgs = this._random.Next(30);
             IList<Customer> customers = new List<Customer>();
 
             for (int i = 0; i < numOfMsgs; i++)
                 customers.Add(Customer.CreateCustomer());
 
-            this.Logger.LogInformation("Publishing a batch of {0} Customers", numOfMsgs);
-            //await this.Producer.Publish(Topic, customers);  // Publish as a batch
+            this._logger.LogInformation("Publishing a batch of {0} Customers", numOfMsgs);
+            //await this._producer.Publish(Topic, customers);  // Publish as a batch
 
             // For demo purposes, loop and publish one at a time
             foreach (var cust in customers)
             {
-                this.Logger.LogInformation("Publishing Customer: {0}", cust.Name);
-                await this.Producer.Publish(Topic, cust);
+                this._logger.LogInformation("Publishing Customer: {0}", cust.Name);
+                await this._producer.Publish(TOPIC, cust);
             }
         }
     }

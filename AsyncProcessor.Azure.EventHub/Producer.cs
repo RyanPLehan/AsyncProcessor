@@ -19,9 +19,9 @@ namespace AsyncProcessor.Azure.EventHub
     /// </remarks>
     public class Producer<TMessage> : IProducer<TMessage>, IDisposable
     {
-        private readonly ILogger Logger;
-        private readonly ProducerSettings Settings;
-        private readonly EventHubProducerClient Client;
+        private readonly ILogger _logger;
+        private readonly ProducerSettings _settings;
+        private readonly EventHubProducerClient _client;
 
         private bool DisposedValue = false;
 
@@ -35,13 +35,13 @@ namespace AsyncProcessor.Azure.EventHub
         public Producer(ILogger<Producer<TMessage>> logger,
                         ProducerSettings settings)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
 
-            this.Settings = settings ??
+            this._settings = settings ??
                 throw new ArgumentNullException(nameof(settings));
 
-            this.Client = CreateClient(settings);
+            this._client = CreateClient(settings);
         }
 
 
@@ -80,11 +80,11 @@ namespace AsyncProcessor.Azure.EventHub
 
             // Ensure that topic is the same as the event hub, if supplied.
             if (!String.IsNullOrWhiteSpace(topic) &&
-                !this.Client.EventHubName.Equals(topic.Trim(), StringComparison.OrdinalIgnoreCase))
+                !this._client.EventHubName.Equals(topic.Trim(), StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("When topic is supplied, it must match Azure Event Hub name");
 
             var eventData = CreateEventData(messages);
-            await this.Client.SendAsync(eventData, cancellationToken);
+            await this._client.SendAsync(eventData, cancellationToken);
         }
 
 
@@ -103,7 +103,7 @@ namespace AsyncProcessor.Azure.EventHub
             {
                 if (disposing)
                 {
-                    this.Client.DisposeAsync().GetAwaiter().GetResult();
+                    this._client.DisposeAsync().GetAwaiter().GetResult();
                 }
 
                 DisposedValue = true;
@@ -126,11 +126,11 @@ namespace AsyncProcessor.Azure.EventHub
         {
             EventHubProducerClient client = null;
 
-            if (String.IsNullOrWhiteSpace(this.Settings.EventHub))
-                client = new EventHubProducerClient(this.Settings.ConnectionString);
+            if (String.IsNullOrWhiteSpace(this._settings.EventHub))
+                client = new EventHubProducerClient(this._settings.ConnectionString);
             else
-                client = new EventHubProducerClient(this.Settings.ConnectionString,
-                                                    this.Settings.EventHub);
+                client = new EventHubProducerClient(this._settings.ConnectionString,
+                                                    this._settings.EventHub);
 
             return client;
         }

@@ -40,15 +40,15 @@ namespace AsyncProcessor.Azure.EventHub
     /// </remarks>
     public class Consumer<TMessage> :  IConsumer<TMessage>, IDisposable
     {
-        private object SemaphoreLock = new object();
-        private bool DisposedValue = false;
-        private string SubscribedTo = null;
-        private ProcessEventArgs LastEventArgs;
+        private object _semaphoreLock = new object();
+        private bool _disposedValue = false;
+        private string _subscribedTo = null;
+        private ProcessEventArgs _lastEventArgs;
 
-        private readonly ILogger Logger;
-        private readonly ConsumerSettings Settings;
-        private readonly EventProcessorClient Client;
-        private readonly System.Timers.Timer Timer;
+        private readonly ILogger _logger;
+        private readonly ConsumerSettings _settings;
+        private readonly EventProcessorClient _client;
+        private readonly System.Timers.Timer _timer;
 
 
         public Consumer(ILogger<Consumer<TMessage>> logger,
@@ -59,14 +59,14 @@ namespace AsyncProcessor.Azure.EventHub
         public Consumer(ILogger<Consumer<TMessage>> logger,
                         ConsumerSettings settings)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
 
-            this.Settings = settings ??
+            this._settings = settings ??
                 throw new ArgumentNullException(nameof(settings));
 
-            this.Client = CreateClient(settings);
-            this.Timer = CreateTimer(settings.CheckpointStore.CheckpointIntervalInSeconds);
+            this._client = CreateClient(settings);
+            this._timer = CreateTimer(settings.CheckpointStore.CheckpointIntervalInSeconds);
 
 
             // Set Default Delegate, just in case
@@ -96,12 +96,12 @@ namespace AsyncProcessor.Azure.EventHub
         {
             // Ensure that topic is the same as the event hub, if supplied.
             if (!String.IsNullOrWhiteSpace(topic) &&
-                !this.Client.EventHubName.Equals(topic.Trim(), StringComparison.OrdinalIgnoreCase))
+                !this._client.EventHubName.Equals(topic.Trim(), StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("When topic is supplied, it must match Azure Event Hub name");
 
-            this.Client.ProcessEventAsync += this.ExecuteProcessEvent;
-            this.Client.ProcessErrorAsync += this.ExecuteProcessError;
-            this.SubscribedTo = topic;
+            this._client.ProcessEventAsync += this.ExecuteProcessEvent;
+            this._client.ProcessErrorAsync += this.ExecuteProcessError;
+            this._subscribedTo = topic;
             await Resume();
         }
 
@@ -113,20 +113,20 @@ namespace AsyncProcessor.Azure.EventHub
         public async Task Detach()
         {
             await Pause();
-            this.Client.ProcessEventAsync -= this.ExecuteProcessEvent;
-            this.Client.ProcessErrorAsync -= this.ExecuteProcessError;
+            this._client.ProcessEventAsync -= this.ExecuteProcessEvent;
+            this._client.ProcessErrorAsync -= this.ExecuteProcessError;
         }
 
         public async Task Pause()
         {
-            if (this.Client.IsRunning)
-                await this.Client.StopProcessingAsync();
+            if (this._client.IsRunning)
+                await this._client.StopProcessingAsync();
         }
 
         public async Task Resume()
         {
-            if (!this.Client.IsRunning)
-                await this.Client.StartProcessingAsync();
+            if (!this._client.IsRunning)
+                await this._client.StartProcessingAsync();
         }
         #endregion
 
@@ -158,7 +158,7 @@ namespace AsyncProcessor.Azure.EventHub
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!DisposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -167,7 +167,7 @@ namespace AsyncProcessor.Azure.EventHub
                     this.ProcessError = null;
                 }
 
-                DisposedValue = true;
+                _disposedValue = true;
             }
         }
         #endregion
@@ -190,15 +190,15 @@ namespace AsyncProcessor.Azure.EventHub
 
             var storageClient = CreateStorageClient(settings.CheckpointStore);
 
-            if (String.IsNullOrWhiteSpace(this.Settings.EventHub))
+            if (String.IsNullOrWhiteSpace(this._settings.EventHub))
                 client = new EventProcessorClient(storageClient,
-                                                  this.Settings.ConsumerGroup,
-                                                  this.Settings.ConnectionString);
+                                                  this._settings.ConsumerGroup,
+                                                  this._settings.ConnectionString);
             else
                 client = new EventProcessorClient(storageClient,
-                                                  this.Settings.ConsumerGroup,
-                                                  this.Settings.ConnectionString,
-                                                  this.Settings.EventHub);
+                                                  this._settings.ConsumerGroup,
+                                                  this._settings.ConnectionString,
+                                                  this._settings.EventHub);
 
             return client;
         }
@@ -225,10 +225,10 @@ namespace AsyncProcessor.Azure.EventHub
         {
             if (ProcessMessage != null)
             {
-                if (!this.Timer.Enabled)
-                    this.Timer.Start();
+                if (!this._timer.Enabled)
+                    this._timer.Start();
 
-                this.LastEventArgs = processEventArgs;
+                this._lastEventArgs = processEventArgs;
                 await ProcessMessage(new MessageEvent(processEventArgs));
             }
         }
@@ -248,7 +248,7 @@ namespace AsyncProcessor.Azure.EventHub
         /// <returns></returns>
         protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
         {
-            this.Logger.LogError(errorEvent.Exception, "Error while processing message on Event Hub: {0}", this.SubscribedTo);
+            this._logger.LogError(errorEvent.Exception, "Error while processing message on Event Hub: {0}", this._subscribedTo);
             return Task.CompletedTask;
         }
 
@@ -256,14 +256,14 @@ namespace AsyncProcessor.Azure.EventHub
         {
             try
             {
-                this.Logger.LogInformation("Issuing a Checkpoint on Event Hub {0}", this.Client.EventHubName);
-                await this.LastEventArgs.UpdateCheckpointAsync();
-                this.Timer.Stop();
+                this._logger.LogInformation("Issuing a Checkpoint on Event Hub {0}", this._client.EventHubName);
+                await this._lastEventArgs.UpdateCheckpointAsync();
+                this._timer.Stop();
             }
 
             catch (Exception ex)
             {
-                this.Logger.LogError(ex, "Error while issuing a Checkpoint on Event Hub {0}", this.Client.EventHubName);
+                this._logger.LogError(ex, "Error while issuing a Checkpoint on Event Hub {0}", this._client.EventHubName);
             }
         }
     }

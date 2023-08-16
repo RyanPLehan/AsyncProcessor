@@ -31,11 +31,11 @@ namespace AsyncProcessor.Confluent.Kafka.Services
     /// </remarks>
     internal class ProcessService : IProcessService
     {
-        private readonly ILogger Logger;
+        private readonly ILogger _logger;
 
         public ProcessService(ILogger<ProcessService> logger)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
         }
 
@@ -58,14 +58,14 @@ namespace AsyncProcessor.Confluent.Kafka.Services
 
                 catch (ConsumeException e)
                 {
-                    this.Logger.LogError(e, "A Kafka consumption error occurred while consuming events");
+                    this._logger.LogError(e, "A Kafka consumption error occurred while consuming events");
                     await OnProcessError(e.Error);
                 }
 
                 catch (KafkaException e)
                 {
                     cancel = true;
-                    this.Logger.LogError(e, "A general Kafka error occurred while consuming events");
+                    this._logger.LogError(e, "A general Kafka error occurred while consuming events");
                     await OnProcessError(e.Error);
                 }
 
@@ -77,7 +77,7 @@ namespace AsyncProcessor.Confluent.Kafka.Services
                 catch (Exception e)
                 {
                     cancel = true;
-                    this.Logger.LogError(e, "An unexpected error occurred while consuming Kafka events");
+                    this._logger.LogError(e, "An unexpected error occurred while consuming Kafka events");
                 }
             }
         }

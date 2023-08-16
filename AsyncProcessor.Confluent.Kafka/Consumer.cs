@@ -25,12 +25,12 @@ namespace AsyncProcessor.Confluent.Kafka
         private bool DisposedValue = false;
         private string SubscribedTo = null;
         private CancellationTokenSource ProcessServiceCancellationTokenSource;
-        private IProcessService ClientProcessService;
+        private IProcessService _clientProcessService;
 
-        private readonly ILogger Logger;
-        private readonly ConsumerSettings Settings;
-        private readonly IServiceScopeFactory ServiceScopeFactory;
-        private readonly IConsumer<Ignore, string> Client;
+        private readonly ILogger _logger;
+        private readonly ConsumerSettings _settings;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IConsumer<Ignore, string> _client;
 
 
         public Consumer(ILogger<Consumer<TMessage>> logger,
@@ -43,16 +43,16 @@ namespace AsyncProcessor.Confluent.Kafka
                         ConsumerSettings settings,
                         IServiceScopeFactory serviceScopeFactory)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
 
-            this.Settings = settings ??
+            this._settings = settings ??
                 throw new ArgumentNullException(nameof(settings));
 
-            this.ServiceScopeFactory = serviceScopeFactory ??
+            this._serviceScopeFactory = serviceScopeFactory ??
                 throw new ArgumentNullException(nameof(serviceScopeFactory));
 
-            this.Client = CreateClient(settings);
+            this._client = CreateClient(settings);
 
             // Set Default Delegate, just in case
             this.ProcessError = this.ProcessErrorDefault;
@@ -79,7 +79,7 @@ namespace AsyncProcessor.Confluent.Kafka
         #region Subscription Management
         public async Task Attach(string topic)
         {
-            this.Client.Subscribe(topic);
+            this._client.Subscribe(topic);
             this.SubscribedTo = topic;
             await Resume();
         }
@@ -92,14 +92,14 @@ namespace AsyncProcessor.Confluent.Kafka
         public async Task Detach()
         {
             await Pause();
-            this.Client.Close();
+            this._client.Close();
         }
 
         public Task Pause()
         {
             this.ProcessServiceCancellationTokenSource.Cancel();
-            this.ClientProcessService.ProcessEvent -= this.ExecuteProcessEvent;
-            this.ClientProcessService.ProcessError -= this.ExecuteProcessError;
+            this._clientProcessService.ProcessEvent -= this.ExecuteProcessEvent;
+            this._clientProcessService.ProcessError -= this.ExecuteProcessError;
 
             return Task.CompletedTask;
         }
@@ -111,13 +111,13 @@ namespace AsyncProcessor.Confluent.Kafka
             // Since the Kafka client uses a polling mechanism, we need to run that mechanism in the background to prevent any blocking operations
             // Using Scope Services, this will create a background running Task (ie thread) without the thread managment
             // This approach allows the worker process to use Subscription Management calls to pause/cancel the polling operation
-            using (var scope = this.ServiceScopeFactory.CreateScope())
+            using (var scope = this._serviceScopeFactory.CreateScope())
             {
-                this.ClientProcessService = scope.ServiceProvider.GetRequiredService<IProcessService>();
-                this.ClientProcessService.ProcessEvent += this.ExecuteProcessEvent;
-                this.ClientProcessService.ProcessError += this.ExecuteProcessError;
+                this._clientProcessService = scope.ServiceProvider.GetRequiredService<IProcessService>();
+                this._clientProcessService.ProcessEvent += this.ExecuteProcessEvent;
+                this._clientProcessService.ProcessError += this.ExecuteProcessError;
 
-                await this.ClientProcessService.ConsumeEvents(this.Client, this.ProcessServiceCancellationTokenSource.Token);
+                await this._clientProcessService.ConsumeEvents(this._client, this.ProcessServiceCancellationTokenSource.Token);
             }
         }
         #endregion
@@ -156,7 +156,7 @@ namespace AsyncProcessor.Confluent.Kafka
                     this.Detach().GetAwaiter().GetResult();
                     this.ProcessMessage = null;
                     this.ProcessError = null;
-                    this.Client.Dispose();
+                    this._client.Dispose();
                 }
 
                 DisposedValue = true;
@@ -198,7 +198,7 @@ namespace AsyncProcessor.Confluent.Kafka
         {
             if (ProcessError != null)
             {
-                await ProcessError(new ErrorEvent(this.Client, error));
+                await ProcessError(new ErrorEvent(this._client, error));
             }
         }
 
@@ -209,7 +209,7 @@ namespace AsyncProcessor.Confluent.Kafka
         /// <returns></returns>
         protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
         {
-            this.Logger.LogError(errorEvent.Exception, "Error while processing message on Topic: {0}", this.SubscribedTo);
+            this._logger.LogError(errorEvent.Exception, "Error while processing message on Topic: {0}", this.SubscribedTo);
             return Task.CompletedTask;
         }
     }

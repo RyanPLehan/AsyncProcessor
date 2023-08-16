@@ -6,16 +6,16 @@ namespace AsyncProcessor.Confluent.Kafka
 {
     public class MessageEvent : IMessageEvent
     {
-        private readonly ConsumeResult<Ignore, string> _Result;
+        private readonly ConsumeResult<Ignore, string> _result;
 
         internal MessageEvent(ConsumeResult<Ignore, string> result)
         {
-            this._Result = result;
+            this._result = result;
         }
 
-        public object EventData => this._Result;
+        public object EventData => this._result;
 
-        public IMessage Message => new Message(this._Result);
+        public IMessage Message => new Message(this._result);
 
 
         internal static ConsumeResult<Ignore, string> ParseResult(IMessageEvent messageEvent)

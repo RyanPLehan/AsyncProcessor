@@ -10,7 +10,7 @@ namespace AsyncProcessor.Azure.EventHub.Example.Consumer
 {
     internal class Worker : ConsumerWorker<Customer>
     {
-        private const string Topic = "proof_of_concept";            // Queue Name or Topic Name
+        private const string TOPIC = "proof_of_concept";            // Queue Name or Topic Name
 
         public Worker(ILogger<Worker> logger,
                       IMediator mediator,
@@ -33,7 +33,7 @@ namespace AsyncProcessor.Azure.EventHub.Example.Consumer
         protected override async Task Subscribe()
         {
             // The Consumer object is created in the DI, but needed in the base class, which is accessible to the derived class
-            await this.Consumer.Attach(Topic);
+            await this.Consumer.Attach(TOPIC);
         }
         #endregion
     }

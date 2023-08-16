@@ -26,9 +26,9 @@ namespace AsyncProcessor.Azure.ServiceBus
         private ServiceBusProcessor Receiver = null;
         private string SubscribedTo = null;
 
-        private readonly ILogger Logger;
-        private readonly ConsumerSettings Settings;
-        private readonly ServiceBusClient Client;
+        private readonly ILogger _logger;
+        private readonly ConsumerSettings _settings;
+        private readonly ServiceBusClient _client;
 
 
         public Consumer(ILogger<Consumer<TMessage>> logger,
@@ -39,13 +39,13 @@ namespace AsyncProcessor.Azure.ServiceBus
         public Consumer(ILogger<Consumer<TMessage>> logger,
                         ConsumerSettings settings)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
 
-            this.Settings = settings ??
+            this._settings = settings ??
                 throw new ArgumentNullException(nameof(settings));
 
-            this.Client = CreateClient(settings);
+            this._client = CreateClient(settings);
 
             // Set Default Delegate, just in case
             this.ProcessError = this.ProcessErrorDefault;
@@ -76,7 +76,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                 this.Receiver.IsClosed)
             {
                 var options = CreateProcessorOptions();
-                this.Receiver = this.Client.CreateProcessor(topic, options);
+                this.Receiver = this._client.CreateProcessor(topic, options);
                 this.Receiver.ProcessMessageAsync += this.ExecuteProcessMessage;
                 this.Receiver.ProcessErrorAsync += this.ExecuteProcessError;
                 this.SubscribedTo = topic;
@@ -90,7 +90,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                 this.Receiver.IsClosed)
             {
                 var options = CreateProcessorOptions();
-                this.Receiver = this.Client.CreateProcessor(topic, subscription, options);
+                this.Receiver = this._client.CreateProcessor(topic, subscription, options);
                 this.Receiver.ProcessMessageAsync += this.ExecuteProcessMessage;
                 this.Receiver.ProcessErrorAsync += this.ExecuteProcessError;
                 this.SubscribedTo = topic;
@@ -177,7 +177,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                 if (disposing)
                 {
                     this.Detach().GetAwaiter().GetResult();
-                    this.Client.DisposeAsync().GetAwaiter().GetResult();
+                    this._client.DisposeAsync().GetAwaiter().GetResult();
 
                     this.ProcessMessage = null;
                     this.ProcessError = null;
@@ -202,7 +202,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// <returns></returns>
         private ServiceBusClient CreateClient(ConnectionSettings settings)
         {
-            return new ServiceBusClient(this.Settings.ConnectionString);
+            return new ServiceBusClient(this._settings.ConnectionString);
         }
 
 
@@ -228,7 +228,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         {
             return new ServiceBusReceiverOptions()
             {
-                PrefetchCount = this.Settings.PrefetchCount,
+                PrefetchCount = this._settings.PrefetchCount,
                 ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete,
                 SubQueue = SubQueue.None,
             };
@@ -239,9 +239,9 @@ namespace AsyncProcessor.Azure.ServiceBus
             return new ServiceBusProcessorOptions()
             {
                 AutoCompleteMessages = true,
-                MaxConcurrentCalls = this.Settings.ConcurrentDispatch,
-                PrefetchCount = this.Settings.PrefetchCount,
-                ReceiveMode = this.Settings.ReceiveMode,
+                MaxConcurrentCalls = this._settings.ConcurrentDispatch,
+                PrefetchCount = this._settings.PrefetchCount,
+                ReceiveMode = this._settings.ReceiveMode,
             };
         }
 
@@ -259,7 +259,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                                                 errorEvent.Exception.Message.Contains("(MessageLockLost)", StringComparison.OrdinalIgnoreCase);
 
             if (!isMessageLockLostException)
-                this.Logger.LogError(errorEvent.Exception, "Error while processing message on Queue/Topic: {0}", this.SubscribedTo);
+                this._logger.LogError(errorEvent.Exception, "Error while processing message on Queue/Topic: {0}", this.SubscribedTo);
 
             return Task.CompletedTask;
         }

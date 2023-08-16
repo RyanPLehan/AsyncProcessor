@@ -10,21 +10,21 @@ namespace AsyncProcessor
 {
     public abstract class ConsumerWorker<TMessage> : BackgroundService
     {
-        protected readonly ILogger Logger;
-        protected readonly IMediator Mediator;
-        protected readonly IConsumer<TMessage> Consumer;
+        private readonly ILogger _logger;
+        private readonly IMediator _mediator;
+        private readonly IConsumer<TMessage> _consumer;
 
         protected ConsumerWorker(ILogger logger,
                                  IMediator mediator,
                                  IConsumer<TMessage> consumer)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
 
-            this.Mediator = mediator ??
+            this._mediator = mediator ??
                 throw new ArgumentNullException(nameof(mediator));
 
-            this.Consumer = consumer ??
+            this._consumer = consumer ??
                 throw new ArgumentNullException(nameof(consumer));
 
             this.Consumer.ProcessMessage = this.ExecuteProcessMessage;
@@ -40,6 +40,12 @@ namespace AsyncProcessor
         protected virtual string? WorkerName => this.GetType().FullName;
 
         protected virtual bool RequeueMessageOnFailure => false;
+
+        protected ILogger Logger => this._logger;
+
+        protected IMediator Mediator => this._mediator;
+
+        protected IConsumer<TMessage> Consumer => this._consumer;
         #endregion
 
 
@@ -47,7 +53,7 @@ namespace AsyncProcessor
         public override Task StartAsync(CancellationToken cancellationToken)
         {
             var msg = String.Format("{0} started.", this.WorkerName);
-            this.Logger.LogInformation(msg);
+            this._logger.LogInformation(msg);
             return base.StartAsync(cancellationToken);
         }
 
@@ -56,7 +62,7 @@ namespace AsyncProcessor
         {
             this.Consumer.Detach();
             var msg = String.Format("{0} stopped", this.WorkerName);
-            this.Logger.LogInformation(msg);
+            this._logger.LogInformation(msg);
             return base.StopAsync(cancellationToken);
         }
 
@@ -70,13 +76,13 @@ namespace AsyncProcessor
         {
             try
             {
-                this.Logger.LogInformation("{0} attaching to subscription", this.WorkerName);
+                this._logger.LogInformation("{0} attaching to subscription", this.WorkerName);
                 await this.Subscribe();
             }
 
             catch (Exception ex)
             {
-                this.Logger.LogError(ex, "{0} encountered an exception while subscribing to Queue/Topic", this.WorkerName);
+                this._logger.LogError(ex, "{0} encountered an exception while subscribing to Queue/Topic", this.WorkerName);
             }
         }
         #endregion
@@ -94,7 +100,7 @@ namespace AsyncProcessor
             {
                 TMessage message = this.Consumer.GetMessage(messageEvent);
 
-                this.Logger.LogInformation("{0} received a  message with ID {1}.", this.WorkerName, messageEvent.Message.MessageId);
+                this._logger.LogInformation("{0} received a  message with ID {1}.", this.WorkerName, messageEvent.Message.MessageId);
 
                 var notification = new MessageReceivedNotification<TMessage> { Message = message };
                 await this.Mediator.Publish(notification);
@@ -102,12 +108,12 @@ namespace AsyncProcessor
                 if (this.Consumer.IsMessageManagementSupported)
                     await this.Consumer.AcknowledgeMessage(messageEvent);  // Manual Acknowledgement
 
-                this.Logger.LogInformation("{0} processed a message with ID {1}.  Returning Successful Acknowledgment.", this.WorkerName, messageEvent.Message.MessageId);
+                this._logger.LogInformation("{0} processed a message with ID {1}.  Returning Successful Acknowledgment.", this.WorkerName, messageEvent.Message.MessageId);
             }
 
             catch (Exception ex)
             {
-                this.Logger.LogError(ex, "Exception while handling event: {0}.  Returning Deny Acknowledgment", ex.Message);
+                this._logger.LogError(ex, "Exception while handling event: {0}.  Returning Deny Acknowledgment", ex.Message);
 
                 if (this.Consumer.IsMessageManagementSupported)
                     await this.Consumer.DenyAcknowledgement(messageEvent, this.RequeueMessageOnFailure);  // Manual Acknowledgement
@@ -123,7 +129,7 @@ namespace AsyncProcessor
         {
             try
             {
-                this.Logger.LogError(errorEvent.Exception, "{0} encountered an unexpected error.", this.WorkerName);
+                this._logger.LogError(errorEvent.Exception, "{0} encountered an unexpected error.", this.WorkerName);
             }
 
             catch

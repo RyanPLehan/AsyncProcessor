@@ -17,9 +17,9 @@ namespace AsyncProcessor.Confluent.Kafka
     /// </remarks>
     public class Producer<TMessage> : IProducer<TMessage>, IDisposable
     {
-        private readonly ILogger Logger;
-        private readonly ProducerSettings Settings;
-        private readonly IProducer<Null, string> Client;
+        private readonly ILogger _logger;
+        private readonly ProducerSettings _settings;
+        private readonly IProducer<Null, string> _client;
 
         private bool DisposedValue = false;
 
@@ -33,13 +33,13 @@ namespace AsyncProcessor.Confluent.Kafka
         public Producer(ILogger<Producer<TMessage>> logger,
                         ProducerSettings settings)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
 
-            this.Settings = settings ??
+            this._settings = settings ??
                 throw new ArgumentNullException(nameof(settings));
 
-            this.Client = CreateClient(settings);
+            this._client = CreateClient(settings);
         }
 
 
@@ -79,7 +79,7 @@ namespace AsyncProcessor.Confluent.Kafka
             DeliveryResult<Null, string> result;
             foreach (TMessage message in messages)
             {
-                result = await this.Client.ProduceAsync(topic, CreateMessage(message), cancellationToken);
+                result = await this._client.ProduceAsync(topic, CreateMessage(message), cancellationToken);
             }
         }
 
@@ -99,7 +99,7 @@ namespace AsyncProcessor.Confluent.Kafka
             {
                 if (disposing)
                 {
-                    this.Client.Dispose();
+                    this._client.Dispose();
                 }
 
                 DisposedValue = true;

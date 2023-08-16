@@ -7,16 +7,16 @@ namespace AsyncProcessor.Azure.EventHub
 {
     public class MessageEvent : IMessageEvent
     {
-        private readonly ProcessEventArgs _Args;
+        private readonly ProcessEventArgs _args;
 
         internal MessageEvent(ProcessEventArgs processEventArgs)
         {
-            this._Args = processEventArgs;
+            this._args = processEventArgs;
         }
 
-        public object EventData => this._Args;
+        public object EventData => this._args;
 
-        public IMessage Message => new Message(this._Args.Data);
+        public IMessage Message => new Message(this._args.Data);
 
 
         internal static ProcessEventArgs ParseArgs(IMessageEvent messageEvent)

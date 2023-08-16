@@ -7,26 +7,26 @@ namespace AsyncProcessor.Confluent.Kafka
 {
     public class Message : IMessage
     {
-        private readonly ConsumeResult<Ignore, string> _Result;
-        private readonly Message<Ignore, string> _ReceivedMessage;
+        private readonly ConsumeResult<Ignore, string> _result;
+        private readonly Message<Ignore, string> _receivedMessage;
 
         internal Message(ConsumeResult<Ignore, string> message)
         {
-            this._Result = message ??
+            this._result = message ??
                 throw new ArgumentNullException(nameof(message));
 
-            this._ReceivedMessage = this._Result.Message;
+            this._receivedMessage = this._result.Message;
         }
 
-        public object MessageData => this._Result;
+        public object MessageData => this._result;
 
         public string MessageId => GetHeaderValue("MessageId");
 
         public string CorrelationId => GetHeaderValue("CorrelationId");
 
-        public string Partition => this._Result.Partition.Value.ToString();
+        public string Partition => this._result.Partition.Value.ToString();
 
-        public DateTime EnqueuedTimeUTC => this._ReceivedMessage.Timestamp.UtcDateTime;
+        public DateTime EnqueuedTimeUTC => this._receivedMessage.Timestamp.UtcDateTime;
 
 
         internal static ConsumeResult<Ignore, string> ParseResult(IMessage message)
@@ -53,7 +53,7 @@ namespace AsyncProcessor.Confluent.Kafka
         {
             string ret = defaultValue;
 
-            IHeader header = this._ReceivedMessage.Headers
+            IHeader header = this._receivedMessage.Headers
                                                   .Where(x => x.Key.Equals(key, StringComparison.OrdinalIgnoreCase))
                                                   .FirstOrDefault();
 

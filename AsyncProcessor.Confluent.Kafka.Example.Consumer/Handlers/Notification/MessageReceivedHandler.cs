@@ -10,18 +10,18 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Consumer.Handlers.Notification
 {
     internal class MessageReceivedHandler : INotificationHandler<MessageReceivedNotification<Customer>>
     {
-        private readonly ILogger Logger;
+        private readonly ILogger _logger;
 
         public MessageReceivedHandler(ILogger<MessageReceivedHandler> logger)
         {
-            this.Logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
         }
 
 
         public Task Handle(MessageReceivedNotification<Customer> notification, CancellationToken cancellationToken)
         {
-            this.Logger.LogInformation("Processing Customer: {0}", notification.Message.Name);
+            this._logger.LogInformation("Processing Customer: {0}", notification.Message.Name);
             return Task.CompletedTask;
         }
     }
