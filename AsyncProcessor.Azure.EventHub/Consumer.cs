@@ -92,41 +92,41 @@ namespace AsyncProcessor.Azure.EventHub
 
 
         #region Subscription Management
-        public async Task Attach(string topic)
+        public async Task Attach(string topic, CancellationToken cancellationToken = default)
         {
             // Ensure that topic is the same as the event hub, if supplied.
             if (!String.IsNullOrWhiteSpace(topic) &&
                 !this._client.EventHubName.Equals(topic.Trim(), StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("When topic is supplied, it must match Azure Event Hub name");
 
-            this._client.ProcessEventAsync += this.ExecuteProcessEvent;
-            this._client.ProcessErrorAsync += this.ExecuteProcessError;
+            this._client.ProcessEventAsync += this.HandleClientProcessEvent;
+            this._client.ProcessErrorAsync += this.HandleClientProcessError;
             this._subscribedTo = topic;
-            await Resume();
+            await Resume(cancellationToken);
         }
 
-        public async Task Attach(string topic, string subscription)
+        public async Task Attach(string topic, string subscription, CancellationToken cancellationToken = default)
         {
-            await this.Attach(topic);
+            await this.Attach(topic, cancellationToken);
         }
 
-        public async Task Detach()
+        public async Task Detach(CancellationToken cancellationToken = default)
         {
-            await Pause();
-            this._client.ProcessEventAsync -= this.ExecuteProcessEvent;
-            this._client.ProcessErrorAsync -= this.ExecuteProcessError;
+            await Pause(cancellationToken);
+            this._client.ProcessEventAsync -= this.HandleClientProcessEvent;
+            this._client.ProcessErrorAsync -= this.HandleClientProcessError;
         }
 
-        public async Task Pause()
+        public async Task Pause(CancellationToken cancellationToken = default)
         {
             if (this._client.IsRunning)
-                await this._client.StopProcessingAsync();
+                await this._client.StopProcessingAsync(cancellationToken);
         }
 
-        public async Task Resume()
+        public async Task Resume(CancellationToken cancellationToken = default)
         {
             if (!this._client.IsRunning)
-                await this._client.StartProcessingAsync();
+                await this._client.StartProcessingAsync(cancellationToken);
         }
         #endregion
 
@@ -179,7 +179,7 @@ namespace AsyncProcessor.Azure.EventHub
         /// <remarks>
         /// For optimal performace the client will be instantiated once
         /// See https://learn.microsoft.com/en-us/dotnet/api/azure.messaging.eventhubs.eventprocessorclient?view=azure-dotnet
-        /// Since this class is registered as a singleton, we can safely initialize the cliet once.
+        /// Since this class is registered as a singleton, we can safely initialize the client once.
         /// However, in this case we don't want to register the client via dependency injection as a singleton because the consumer and producer could have different connections
         /// </remarks>
         /// <param name="settings"></param>
@@ -221,7 +221,7 @@ namespace AsyncProcessor.Azure.EventHub
 
 
 
-        private async Task ExecuteProcessEvent(ProcessEventArgs processEventArgs)
+        private async Task HandleClientProcessEvent(ProcessEventArgs processEventArgs)
         {
             if (ProcessMessage != null)
             {
@@ -233,7 +233,7 @@ namespace AsyncProcessor.Azure.EventHub
             }
         }
 
-        private async Task ExecuteProcessError(ProcessErrorEventArgs processErrorEventArgs)
+        private async Task HandleClientProcessError(ProcessErrorEventArgs processErrorEventArgs)
         {
             if (ProcessError != null)
             {
@@ -242,9 +242,9 @@ namespace AsyncProcessor.Azure.EventHub
         }
 
         /// <summary>
-        /// Receive and process message
+        /// Default process for handling an error
         /// </summary>
-        /// <param name="loadPostingMessage"></param>
+        /// <param name="errorEvent"></param>
         /// <returns></returns>
         protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
         {

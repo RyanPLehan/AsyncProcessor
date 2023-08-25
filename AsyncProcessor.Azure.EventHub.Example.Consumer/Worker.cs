@@ -23,17 +23,17 @@ namespace AsyncProcessor.Azure.EventHub.Example.Consumer
         /// <summary>
         /// Override base WorkerName if wanting to have a different name then the actual class
         /// </summary>
-        protected override string? WorkerName => "Consumer";
+        protected override string? WorkerName => "Azure Event Hub Consumer";
 
         /// <summary>
         /// Must implement Subscribe method to subscribe to queue or topic/subscription to receive messages
         /// </summary>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        protected override async Task Subscribe()
+        protected override async Task Subscribe(CancellationToken cancellationToken)
         {
             // The Consumer object is created in the DI, but needed in the base class, which is accessible to the derived class
-            await this.Consumer.Attach(TOPIC);
+            await this.Consumer.Attach(TOPIC, cancellationToken);
         }
         #endregion
     }

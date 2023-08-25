@@ -13,7 +13,7 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Producer
 {
     internal class Worker : BackgroundService
     {
-        private const string WORKER_NAME = "Producer";
+        private const string WORKER_NAME = "Confluent Kafka Producer";
         private const string TOPIC = "proof_of_concept";            // Queue Name or Topic Name
 
         private readonly ILogger _logger;
@@ -56,14 +56,19 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Producer
         /// <summary>
         /// Setup connection to TQL Pub Sub
         /// </summary>
-        /// <param name="stoppingToken"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
         {
             try
             {
                 // Use timer to slow down process of publishing messages
                 this._timer.Start();
+            }
+
+            catch (OperationCanceledException ex)
+            {
+                this._logger.LogError(ex, "{0} message publishing operation has been cancelled", WORKER_NAME);
             }
 
             catch (Exception ex)

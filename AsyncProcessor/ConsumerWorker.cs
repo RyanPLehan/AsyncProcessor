@@ -32,7 +32,7 @@ namespace AsyncProcessor
         }
 
         #region Abstraction Definitions
-        protected abstract Task Subscribe();
+        protected abstract Task Subscribe(CancellationToken cancellationToken);
         #endregion
 
 
@@ -50,7 +50,7 @@ namespace AsyncProcessor
 
 
         #region Override BackgroundService Methods
-        public override Task StartAsync(CancellationToken cancellationToken)
+        public override Task StartAsync(CancellationToken cancellationToken = default)
         {
             var msg = String.Format("{0} started.", this.WorkerName);
             this._logger.LogInformation(msg);
@@ -58,7 +58,7 @@ namespace AsyncProcessor
         }
 
 
-        public override Task StopAsync(CancellationToken cancellationToken)
+        public override Task StopAsync(CancellationToken cancellationToken = default)
         {
             this.Consumer.Detach();
             var msg = String.Format("{0} stopped", this.WorkerName);
@@ -68,16 +68,16 @@ namespace AsyncProcessor
 
 
         /// <summary>
-        /// Setup connection to TQL Pub Sub
+        /// Entry point for main execution
         /// </summary>
-        /// <param name="stoppingToken"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 this._logger.LogInformation("{0} attaching to subscription", this.WorkerName);
-                await this.Subscribe();
+                await this.Subscribe(cancellationToken);
             }
 
             catch (Exception ex)
@@ -111,9 +111,14 @@ namespace AsyncProcessor
                 this._logger.LogInformation("{0} processed a message with ID {1}.  Returning Successful Acknowledgment.", this.WorkerName, messageEvent.Message.MessageId);
             }
 
+            catch (OperationCanceledException ex)
+            {
+                this._logger.LogError(ex, "{0} message processing operation has been cancelled", this.WorkerName);
+            }
+
             catch (Exception ex)
             {
-                this._logger.LogError(ex, "Exception while handling event: {0}.  Returning Deny Acknowledgment", ex.Message);
+                this._logger.LogError(ex, "Exception while handling event.  Returning Deny Acknowledgment");
 
                 if (this.Consumer.IsMessageManagementSupported)
                     await this.Consumer.DenyAcknowledgement(messageEvent, this.RequeueMessageOnFailure);  // Manual Acknowledgement

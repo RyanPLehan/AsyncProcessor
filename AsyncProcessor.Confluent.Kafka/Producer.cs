@@ -21,7 +21,7 @@ namespace AsyncProcessor.Confluent.Kafka
         private readonly ProducerSettings _settings;
         private readonly IProducer<Null, string> _client;
 
-        private bool DisposedValue = false;
+        private bool _disposedValue = false;
 
         public Producer(ILogger<Producer<TMessage>> logger,
                         IOptions<ProducerSettings> settings)
@@ -70,7 +70,7 @@ namespace AsyncProcessor.Confluent.Kafka
                                   IEnumerable<TMessage> messages,
                                   CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (this.DisposedValue)
+            if (this._disposedValue)
                 throw new ObjectDisposedException(nameof(Producer<TMessage>));
 
             if (!messages.Any())
@@ -95,14 +95,14 @@ namespace AsyncProcessor.Confluent.Kafka
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!DisposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
                     this._client.Dispose();
                 }
 
-                DisposedValue = true;
+                _disposedValue = true;
             }
         }
         #endregion
@@ -112,7 +112,7 @@ namespace AsyncProcessor.Confluent.Kafka
         /// </summary>
         /// <remarks>
         /// For optimal performace the client will be instantiated once
-        /// Since this class is registered as a singleton, we can safely initialize the cliet once.
+        /// Since this class is registered as a singleton, we can safely initialize the client once.
         /// However, in this case we don't want to register the client via dependency injection as a singleton because the consumer and producer could have different connections
         /// </remarks>
         /// <param name="settings"></param>

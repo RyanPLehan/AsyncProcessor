@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using AsyncProcessor;
 using AsyncProcessor.Formatters;
 using AsyncProcessor.Azure.ServiceBus.Configuration;
+using System.Threading;
 
 
 namespace AsyncProcessor.Azure.ServiceBus
@@ -22,9 +23,9 @@ namespace AsyncProcessor.Azure.ServiceBus
     /// </remarks>
     public class Consumer<TMessage> :  IConsumer<TMessage>, IDisposable
     {
-        private bool DisposedValue = false;
-        private ServiceBusProcessor Receiver = null;
-        private string SubscribedTo = null;
+        private bool _disposedValue = false;
+        private ServiceBusProcessor _receiver = null;
+        private string _subscribedTo = null;
 
         private readonly ILogger _logger;
         private readonly ConsumerSettings _settings;
@@ -70,56 +71,56 @@ namespace AsyncProcessor.Azure.ServiceBus
 
 
         #region Subscription Management
-        public async Task Attach(string topic)
+        public async Task Attach(string topic, CancellationToken cancellationToken = default)
         {
-            if (this.Receiver == null ||
-                this.Receiver.IsClosed)
+            if (this._receiver == null ||
+                this._receiver.IsClosed)
             {
                 var options = CreateProcessorOptions();
-                this.Receiver = this._client.CreateProcessor(topic, options);
-                this.Receiver.ProcessMessageAsync += this.ExecuteProcessMessage;
-                this.Receiver.ProcessErrorAsync += this.ExecuteProcessError;
-                this.SubscribedTo = topic;
-                await Resume();
+                this._receiver = this._client.CreateProcessor(topic, options);
+                this._receiver.ProcessMessageAsync += this.HandleClientProcessMessage;
+                this._receiver.ProcessErrorAsync += this.HandleClientProcessError;
+                this._subscribedTo = topic;
+                await Resume(cancellationToken);
             }
         }
 
-        public async Task Attach(string topic, string subscription)
+        public async Task Attach(string topic, string subscription, CancellationToken cancellationToken = default)
         {
-            if (this.Receiver == null ||
-                this.Receiver.IsClosed)
+            if (this._receiver == null ||
+                this._receiver.IsClosed)
             {
                 var options = CreateProcessorOptions();
-                this.Receiver = this._client.CreateProcessor(topic, subscription, options);
-                this.Receiver.ProcessMessageAsync += this.ExecuteProcessMessage;
-                this.Receiver.ProcessErrorAsync += this.ExecuteProcessError;
-                this.SubscribedTo = topic;
-                await Resume();
+                this._receiver = this._client.CreateProcessor(topic, subscription, options);
+                this._receiver.ProcessMessageAsync += this.HandleClientProcessMessage;
+                this._receiver.ProcessErrorAsync += this.HandleClientProcessError;
+                this._subscribedTo = topic;
+                await Resume(cancellationToken);
             }
         }
 
-        public async Task Detach()
+        public async Task Detach(CancellationToken cancellationToken = default)
         {
-            if (this.Receiver != null &&
-                !this.Receiver.IsClosed)
+            if (this._receiver != null &&
+                !this._receiver.IsClosed)
             {
-                await Pause();
-                this.Receiver.ProcessMessageAsync -= this.ExecuteProcessMessage;
-                this.Receiver.ProcessErrorAsync -= this.ExecuteProcessError;
-                await this.Receiver.DisposeAsync();
+                await Pause(cancellationToken);
+                this._receiver.ProcessMessageAsync -= this.HandleClientProcessMessage;
+                this._receiver.ProcessErrorAsync -= this.HandleClientProcessError;
+                await this._receiver.DisposeAsync();
             }
         }
 
-        public async Task Pause()
+        public async Task Pause(CancellationToken cancellationToken = default)
         {
-            if (this.Receiver != null)
-                await this.Receiver.StopProcessingAsync();
+            if (this._receiver != null)
+                await this._receiver.StopProcessingAsync(cancellationToken);
         }
 
-        public async Task Resume()
+        public async Task Resume(CancellationToken cancellationToken = default)
         {
-            if (this.Receiver != null)
-                await this.Receiver.StartProcessingAsync();
+            if (this._receiver != null)
+                await this._receiver.StartProcessingAsync(cancellationToken);
         }
         #endregion
 
@@ -131,8 +132,8 @@ namespace AsyncProcessor.Azure.ServiceBus
         {
             ArgumentNullException.ThrowIfNull(messageEvent);
 
-            if (this.Receiver != null &&
-                this.Receiver.ReceiveMode == ServiceBusReceiveMode.ReceiveAndDelete)
+            if (this._receiver != null &&
+                this._receiver.ReceiveMode == ServiceBusReceiveMode.ReceiveAndDelete)
                 return;
 
             if (messageEvent != null)
@@ -148,8 +149,8 @@ namespace AsyncProcessor.Azure.ServiceBus
         {
             ArgumentNullException.ThrowIfNull(messageEvent);
 
-            if (this.Receiver != null &&
-                this.Receiver.ReceiveMode == ServiceBusReceiveMode.ReceiveAndDelete)
+            if (this._receiver != null &&
+                this._receiver.ReceiveMode == ServiceBusReceiveMode.ReceiveAndDelete)
                 return;
 
             var processMessageEvent = MessageEvent.ParseArgs(messageEvent);
@@ -172,7 +173,7 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!DisposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -183,7 +184,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                     this.ProcessError = null;
                 }
 
-                DisposedValue = true;
+                _disposedValue = true;
             }
         }
         #endregion
@@ -195,7 +196,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// <remarks>
         /// For optimal performace the client will be instantiated once
         /// See https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-performance-improvements?tabs=net-standard-sdk-2#reusing-factories-and-clients
-        /// Since this class is registered as a singleton, we can safely initialize the cliet once.
+        /// Since this class is registered as a singleton, we can safely initialize the client once.
         /// However, in this case we don't want to register the client via dependency injection as a singleton because the consumer and producer could have different connections
         /// </remarks>
         /// <param name="settings"></param>
@@ -206,7 +207,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         }
 
 
-        private async Task ExecuteProcessMessage(ProcessMessageEventArgs processMessageEventArgs)
+        private async Task HandleClientProcessMessage(ProcessMessageEventArgs processMessageEventArgs)
         {
             if (ProcessMessage != null)
             {
@@ -214,7 +215,7 @@ namespace AsyncProcessor.Azure.ServiceBus
             }
         }
 
-        private async Task ExecuteProcessError(ProcessErrorEventArgs processErrorEventArgs)
+        private async Task HandleClientProcessError(ProcessErrorEventArgs processErrorEventArgs)
         {
             if (ProcessError != null)
             {
@@ -246,7 +247,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         }
 
         /// <summary>
-        /// Receive and process message
+        /// Default process for handling an error
         /// </summary>
         /// <param name="errorEvent"></param>
         /// <returns></returns>
@@ -256,10 +257,10 @@ namespace AsyncProcessor.Azure.ServiceBus
 
             // Do not log if message was locked
             bool isMessageLockLostException = (errorEvent.Exception is ServiceBusException) &&
-                                                errorEvent.Exception.Message.Contains("(MessageLockLost)", StringComparison.OrdinalIgnoreCase);
+                                               errorEvent.Exception.Message.Contains("(MessageLockLost)", StringComparison.OrdinalIgnoreCase);
 
             if (!isMessageLockLostException)
-                this._logger.LogError(errorEvent.Exception, "Error while processing message on Queue/Topic: {0}", this.SubscribedTo);
+                this._logger.LogError(errorEvent.Exception, "Error while processing message on Queue/Topic: {0}", this._subscribedTo);
 
             return Task.CompletedTask;
         }

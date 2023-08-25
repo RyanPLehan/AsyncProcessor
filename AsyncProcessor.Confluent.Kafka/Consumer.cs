@@ -22,7 +22,7 @@ namespace AsyncProcessor.Confluent.Kafka
     /// </remarks>
     public class Consumer<TMessage> :  IConsumer<TMessage>, IDisposable
     {
-        private bool DisposedValue = false;
+        private bool _disposedValue = false;
         private string SubscribedTo = null;
         private CancellationTokenSource ProcessServiceCancellationTokenSource;
         private IProcessService _clientProcessService;
@@ -77,34 +77,34 @@ namespace AsyncProcessor.Confluent.Kafka
 
 
         #region Subscription Management
-        public async Task Attach(string topic)
+        public async Task Attach(string topic, CancellationToken cancellationToken = default)
         {
             this._client.Subscribe(topic);
             this.SubscribedTo = topic;
-            await Resume();
+            await Resume(cancellationToken);
         }
 
-        public async Task Attach(string topic, string subscription)
+        public async Task Attach(string topic, string subscription, CancellationToken cancellationToken = default)
         {
-            await this.Attach(topic);
+            await this.Attach(topic, cancellationToken);
         }
 
-        public async Task Detach()
+        public async Task Detach(CancellationToken cancellationToken = default)
         {
-            await Pause();
+            await Pause(cancellationToken);
             this._client.Close();
         }
 
-        public Task Pause()
+        public Task Pause(CancellationToken cancellationToken = default)
         {
             this.ProcessServiceCancellationTokenSource.Cancel();
-            this._clientProcessService.ProcessEvent -= this.ExecuteProcessEvent;
-            this._clientProcessService.ProcessError -= this.ExecuteProcessError;
+            this._clientProcessService.ProcessEvent -= this.HandleClientProcessEvent;
+            this._clientProcessService.ProcessError -= this.HandleClientProcessError;
 
             return Task.CompletedTask;
         }
 
-        public async Task Resume()
+        public async Task Resume(CancellationToken cancellationToken = default)
         {
             this.ProcessServiceCancellationTokenSource = new CancellationTokenSource();
 
@@ -114,8 +114,8 @@ namespace AsyncProcessor.Confluent.Kafka
             using (var scope = this._serviceScopeFactory.CreateScope())
             {
                 this._clientProcessService = scope.ServiceProvider.GetRequiredService<IProcessService>();
-                this._clientProcessService.ProcessEvent += this.ExecuteProcessEvent;
-                this._clientProcessService.ProcessError += this.ExecuteProcessError;
+                this._clientProcessService.ProcessEvent += this.HandleClientProcessEvent;
+                this._clientProcessService.ProcessError += this.HandleClientProcessError;
 
                 await this._clientProcessService.ConsumeEvents(this._client, this.ProcessServiceCancellationTokenSource.Token);
             }
@@ -149,7 +149,7 @@ namespace AsyncProcessor.Confluent.Kafka
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!DisposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -159,7 +159,7 @@ namespace AsyncProcessor.Confluent.Kafka
                     this._client.Dispose();
                 }
 
-                DisposedValue = true;
+                _disposedValue = true;
             }
         }
         #endregion
@@ -170,7 +170,7 @@ namespace AsyncProcessor.Confluent.Kafka
         /// </summary>
         /// <remarks>
         /// For optimal performace the client will be instantiated once
-        /// Since this class is registered as a singleton, we can safely initialize the cliet once.
+        /// Since this class is registered as a singleton, we can safely initialize the client once.
         /// However, in this case we don't want to register the client via dependency injection as a singleton because the consumer and producer could have different connections
         /// </remarks>
         /// <param name="settings"></param>
@@ -186,7 +186,7 @@ namespace AsyncProcessor.Confluent.Kafka
 
 
 
-        private async Task ExecuteProcessEvent(ConsumeResult<Ignore, string> result)
+        private async Task HandleClientProcessEvent(ConsumeResult<Ignore, string> result)
         {
             if (ProcessMessage != null)
             {
@@ -194,7 +194,7 @@ namespace AsyncProcessor.Confluent.Kafka
             }
         }
 
-        private async Task ExecuteProcessError(Error error)
+        private async Task HandleClientProcessError(Error error)
         {
             if (ProcessError != null)
             {
@@ -203,9 +203,9 @@ namespace AsyncProcessor.Confluent.Kafka
         }
 
         /// <summary>
-        /// Receive and process message
+        /// Default process for handling an error
         /// </summary>
-        /// <param name="loadPostingMessage"></param>
+        /// <param name="errorEvent"></param>
         /// <returns></returns>
         protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
         {

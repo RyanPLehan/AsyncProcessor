@@ -21,10 +21,10 @@ namespace AsyncProcessor.Azure.ServiceBus
         private readonly ILogger _logger;
         private readonly ProducerSettings _settings;
         private readonly ServiceBusClient _client;
-        private readonly IDictionary<string, ServiceBusSender> Senders;
-        private readonly object SemaphoreLock = new object();
+        private readonly IDictionary<string, ServiceBusSender> _senders;
+        private readonly object _semaphoreLock = new object();
 
-        private bool DisposedValue = false;
+        private bool _disposedValue = false;
 
         public Producer(ILogger<Producer<TMessage>> logger,
                         IOptions<ProducerSettings> settings)
@@ -44,7 +44,7 @@ namespace AsyncProcessor.Azure.ServiceBus
 
             this._client = CreateClient(settings);
 
-            this.Senders = new Dictionary<string, ServiceBusSender>(StringComparer.OrdinalIgnoreCase);
+            this._senders = new Dictionary<string, ServiceBusSender>(StringComparer.OrdinalIgnoreCase);
         }
 
 
@@ -60,7 +60,7 @@ namespace AsyncProcessor.Azure.ServiceBus
                                   IEnumerable<TMessage> messages,
                                   CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (this.DisposedValue)
+            if (this._disposedValue)
                 throw new ObjectDisposedException(nameof(Producer<TMessage>));
 
             if (String.IsNullOrWhiteSpace(topic))
@@ -93,18 +93,18 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!DisposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
-                    foreach (ServiceBusSender sender in this.Senders.Values)
+                    foreach (ServiceBusSender sender in this._senders.Values)
                         sender.DisposeAsync().GetAwaiter().GetResult();
 
                     this._client.DisposeAsync().GetAwaiter().GetResult();
                 }
 
-                this.Senders.Clear();
-                DisposedValue = true;
+                this._senders.Clear();
+                _disposedValue = true;
             }
         }
         #endregion
@@ -115,7 +115,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// <remarks>
         /// For optimal performace the client will be instantiated once
         /// See https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-performance-improvements?tabs=net-standard-sdk-2#reusing-factories-and-clients
-        /// Since this class is registered as a singleton, we can safely initialize the cliet once.
+        /// Since this class is registered as a singleton, we can safely initialize the client once.
         /// However, in this case we don't want to register the client via dependency injection as a singleton because the consumer and producer could have different connections
         /// </remarks>
         /// <param name="settings"></param>
@@ -141,27 +141,27 @@ namespace AsyncProcessor.Azure.ServiceBus
 
             try
             {
-                lock (this.SemaphoreLock)
+                lock (this._semaphoreLock)
                 {
                     bool isConnectionClosed = true;
-                    var hasSender = this.Senders.ContainsKey(topic);
+                    var hasSender = this._senders.ContainsKey(topic);
 
                     // Acquire connection and test to make sure it is still connected
                     if (hasSender)
                     {
-                        ret = this.Senders[topic];
+                        ret = this._senders[topic];
                         isConnectionClosed = ret.IsClosed;
 
                         // Remove connection from dictionary so that it can be re-added back in
                         if (isConnectionClosed)
-                            this.Senders.Remove(topic);
+                            this._senders.Remove(topic);
                     }
 
                     // If no connection or has become disconnected, get one
                     if (!hasSender || isConnectionClosed)
                     {
                         ret = this._client.CreateSender(topic);
-                        this.Senders.Add(topic, ret);
+                        this._senders.Add(topic, ret);
                     }
                 }
             }
