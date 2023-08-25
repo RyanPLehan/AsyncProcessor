@@ -14,7 +14,7 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Producer
     internal class Worker : BackgroundService
     {
         private const string WORKER_NAME = "Confluent Kafka Producer";
-        private const string TOPIC = "proof_of_concept";            // Queue Name or Topic Name
+        private const string TOPIC = "tblcustomers";            // Queue Name or Topic Name
 
         private readonly ILogger _logger;
         private readonly IProducer<Customer> _producer;

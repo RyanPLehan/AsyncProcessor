@@ -10,7 +10,7 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Consumer
 {
     internal class Worker : ConsumerWorker<Customer>
     {
-        private const string TOPIC = "proof_of_concept";            // Queue Name or Topic Name
+        private const string TOPIC = "tblcustomers";            // Queue Name or Topic Name
 
         public Worker(ILogger<Worker> logger,
                       IMediator mediator,
