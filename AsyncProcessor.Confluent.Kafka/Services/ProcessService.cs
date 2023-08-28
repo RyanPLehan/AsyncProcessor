@@ -31,6 +31,7 @@ namespace AsyncProcessor.Confluent.Kafka.Services
     /// </remarks>
     internal class ProcessService : IProcessService
     {
+        private bool _cancel = false;
         private readonly ILogger _logger;
 
         public ProcessService(ILogger<ProcessService> logger)
@@ -43,12 +44,12 @@ namespace AsyncProcessor.Confluent.Kafka.Services
         public Func<Error, Task> ProcessError { get; set; }
 
 
-        public async Task ConsumeEvents(IConsumer<Ignore, string> client, CancellationToken cancellationToken)
+        public async Task StartConsumeEvents(IConsumer<Ignore, string> client, CancellationToken cancellationToken)
         {
-            bool cancel = false;
+            this._cancel = false;
             ConsumeResult<Ignore, string> result = null;
 
-            while (!cancel)
+            while (!this._cancel)
             {
                 try
                 {
@@ -64,22 +65,27 @@ namespace AsyncProcessor.Confluent.Kafka.Services
 
                 catch (KafkaException e)
                 {
-                    cancel = true;
+                    this._cancel = true;
                     this._logger.LogError(e, "A general Kafka error occurred while consuming events");
                     await OnProcessError(e.Error);
                 }
 
                 catch (OperationCanceledException e)
                 {
-                    cancel = true;
+                    this._cancel = true;
                 }
 
                 catch (Exception e)
                 {
-                    cancel = true;
+                    this._cancel = true;
                     this._logger.LogError(e, "An unexpected error occurred while consuming Kafka events");
                 }
             }
+        }
+
+        public void StopConsumeEvents()
+        {
+            this._cancel = true;
         }
 
         private async Task OnProcessEvent(ConsumeResult<Ignore, string> result)

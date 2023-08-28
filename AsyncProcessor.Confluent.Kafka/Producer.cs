@@ -52,7 +52,7 @@ namespace AsyncProcessor.Confluent.Kafka
         /// <returns></returns>
         public async Task Publish(string topic,
                                   TMessage message,
-                                  CancellationToken cancellationToken = default(CancellationToken))
+                                  CancellationToken cancellationToken = default)
         {
             await this.Publish(topic, new TMessage[] { message }, cancellationToken);
         }
@@ -68,7 +68,7 @@ namespace AsyncProcessor.Confluent.Kafka
         /// <exception cref="ObjectDisposedException"></exception>
         public async Task Publish(string topic,
                                   IEnumerable<TMessage> messages,
-                                  CancellationToken cancellationToken = default(CancellationToken))
+                                  CancellationToken cancellationToken = default)
         {
             if (this._disposedValue)
                 throw new ObjectDisposedException(nameof(Producer<TMessage>));
@@ -120,7 +120,9 @@ namespace AsyncProcessor.Confluent.Kafka
         private IProducer<Null, string> CreateClient(ConnectionSettings settings)
         {
             var config = new ProducerConfig(settings.ConnectionProperties);
-            var builder = new ProducerBuilder<Null, string>(config);
+            var builder = new ProducerBuilder<Null, string>(config)
+                                .SetKeySerializer(Serializers.Null)
+                                .SetValueSerializer(Serializers.Utf8);
 
             return builder.Build();
         }
@@ -130,6 +132,7 @@ namespace AsyncProcessor.Confluent.Kafka
         {
             return new Message<Null, string>()
             {
+                Key = null,
                 Value = Json.Serialize(message),
             };
         }

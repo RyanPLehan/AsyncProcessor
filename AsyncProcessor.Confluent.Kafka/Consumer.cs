@@ -24,7 +24,6 @@ namespace AsyncProcessor.Confluent.Kafka
     {
         private bool _disposedValue = false;
         private string SubscribedTo = null;
-        private CancellationTokenSource ProcessServiceCancellationTokenSource;
         private IProcessService _clientProcessService;
 
         private readonly ILogger _logger;
@@ -97,7 +96,7 @@ namespace AsyncProcessor.Confluent.Kafka
 
         public Task Pause(CancellationToken cancellationToken = default)
         {
-            this.ProcessServiceCancellationTokenSource.Cancel();
+            this._clientProcessService.StopConsumeEvents();
             this._clientProcessService.ProcessEvent -= this.HandleClientProcessEvent;
             this._clientProcessService.ProcessError -= this.HandleClientProcessError;
 
@@ -106,8 +105,6 @@ namespace AsyncProcessor.Confluent.Kafka
 
         public async Task Resume(CancellationToken cancellationToken = default)
         {
-            this.ProcessServiceCancellationTokenSource = new CancellationTokenSource();
-
             // Since the Kafka client uses a polling mechanism, we need to run that mechanism in the background to prevent any blocking operations
             // Using Scope Services, this will create a background running Task (ie thread) without the thread managment
             // This approach allows the worker process to use Subscription Management calls to pause/cancel the polling operation
@@ -117,7 +114,7 @@ namespace AsyncProcessor.Confluent.Kafka
                 this._clientProcessService.ProcessEvent += this.HandleClientProcessEvent;
                 this._clientProcessService.ProcessError += this.HandleClientProcessError;
 
-                await this._clientProcessService.ConsumeEvents(this._client, this.ProcessServiceCancellationTokenSource.Token);
+                await this._clientProcessService.StartConsumeEvents(this._client, cancellationToken);
             }
         }
         #endregion
@@ -179,7 +176,9 @@ namespace AsyncProcessor.Confluent.Kafka
         private IConsumer<Ignore, string> CreateClient(ConnectionSettings settings)
         {
             var config = new ConsumerConfig(settings.ConnectionProperties);
-            var builder = new ConsumerBuilder<Ignore, string>(config);
+            var builder = new ConsumerBuilder<Ignore, string>(config)
+                                .SetKeyDeserializer(Deserializers.Ignore)
+                                .SetValueDeserializer(Deserializers.Utf8);
 
             return builder.Build();
         }

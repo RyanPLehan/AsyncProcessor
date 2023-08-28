@@ -50,7 +50,7 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         public async Task Publish(string topic,
                                   TMessage message,
-                                  CancellationToken cancellationToken = default(CancellationToken))
+                                  CancellationToken cancellationToken = default)
         {
             await this.Publish(topic, new TMessage[] { message }, cancellationToken);
         }
@@ -58,7 +58,7 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         public async Task Publish(string topic,
                                   IEnumerable<TMessage> messages,
-                                  CancellationToken cancellationToken = default(CancellationToken))
+                                  CancellationToken cancellationToken = default)
         {
             if (this._disposedValue)
                 throw new ObjectDisposedException(nameof(Producer<TMessage>));

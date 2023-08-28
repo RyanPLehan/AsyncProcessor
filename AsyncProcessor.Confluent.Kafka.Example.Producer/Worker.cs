@@ -58,7 +58,7 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Producer
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -76,7 +76,7 @@ namespace AsyncProcessor.Confluent.Kafka.Example.Producer
                 this._logger.LogError(ex, "{0} encountered an exception while publishing to Queue/Topic ({1})", WORKER_NAME, TOPIC);
             }
 
-            return Task.CompletedTask;
+            //return Task.CompletedTask;
         }
         #endregion
 
