@@ -7,8 +7,9 @@ namespace AsyncProcessor.Confluent.Kafka.Services
 {
     internal interface IProcessService
     {
-        Func<ConsumeResult<Ignore, string>, Task> ProcessEvent { get; set; }
-        Func<Error, Task> ProcessError { get; set; }
+        event Func<ConsumeResult<Ignore, string>, Task> ProcessEvent;
+        event Func<Error, Task> ProcessError;
+
         Task StartConsumeEvents(IConsumer<Ignore, string> client, CancellationToken cancellationToken);
         void StopConsumeEvents();
     }

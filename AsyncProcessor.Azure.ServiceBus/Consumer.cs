@@ -5,6 +5,7 @@ using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AsyncProcessor;
+using AsyncProcessor.Asserts;
 using AsyncProcessor.Formatters;
 using AsyncProcessor.Azure.ServiceBus.Configuration;
 using System.Threading;
@@ -31,6 +32,9 @@ namespace AsyncProcessor.Azure.ServiceBus
         private readonly ConsumerSettings _settings;
         private readonly ServiceBusClient _client;
 
+        private Func<IMessageEvent, Task> _processMessage;
+        private Func<IErrorEvent, Task> _processError;
+
 
         public Consumer(ILogger<Consumer<TMessage>> logger,
                         IOptions<ConsumerSettings> settings)
@@ -49,14 +53,49 @@ namespace AsyncProcessor.Azure.ServiceBus
             this._client = CreateClient(settings);
 
             // Set Default Delegate, just in case
-            this.ProcessError = this.ProcessErrorDefault;
+            // this.ProcessError += this.HandleProcessErrorDefault;
         }
 
 
         #region Consumer
-        public Func<IMessageEvent, Task> ProcessMessage { get; set; }
+        public event Func<IMessageEvent, Task> ProcessMessage
+        {
+            add
+            {
+                Argument.AssertNotNull(value, nameof(ProcessMessage));
+                Argument.AssertEventHandlerNotAssigned(this._processMessage, default, nameof(ProcessMessage));
 
-        public Func<IErrorEvent, Task> ProcessError { get; set; }
+                this._processMessage = value;
+            }
+
+            remove
+            {
+                Argument.AssertNotNull(value, nameof(ProcessMessage));
+                Argument.AssertSameEventHandlerAssigned(this._processMessage, value, nameof(ProcessMessage));
+
+                this._processMessage = default;
+            }
+        }
+
+
+        public event Func<IErrorEvent, Task> ProcessError
+        {
+            add
+            {
+                Argument.AssertNotNull(value, nameof(ProcessError));
+                Argument.AssertEventHandlerNotAssigned(this._processError, default, nameof(ProcessError));
+
+                this._processError = value;
+            }
+
+            remove
+            {
+                Argument.AssertNotNull(value, nameof(ProcessError));
+                Argument.AssertSameEventHandlerAssigned(this._processError, value, nameof(ProcessError));
+
+                this._processError = default;
+            }
+        }
 
         public TMessage GetMessage(IMessageEvent messageEvent)
         {
@@ -180,8 +219,8 @@ namespace AsyncProcessor.Azure.ServiceBus
                     this.Detach().GetAwaiter().GetResult();
                     this._client.DisposeAsync().GetAwaiter().GetResult();
 
-                    this.ProcessMessage = null;
-                    this.ProcessError = null;
+                    this._processMessage = default;
+                    this._processError = default;
                 }
 
                 _disposedValue = true;
@@ -209,17 +248,17 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         private async Task HandleClientProcessMessage(ProcessMessageEventArgs processMessageEventArgs)
         {
-            if (ProcessMessage != null)
+            if (this._processMessage != null)
             {
-                await ProcessMessage(new MessageEvent(processMessageEventArgs));
+                await this._processMessage(new MessageEvent(processMessageEventArgs));
             }
         }
 
         private async Task HandleClientProcessError(ProcessErrorEventArgs processErrorEventArgs)
         {
-            if (ProcessError != null)
+            if (this._processError != default)
             {
-                await ProcessError(new ErrorEvent(processErrorEventArgs));
+                await this._processError(new ErrorEvent(processErrorEventArgs));
             }
         }
 
@@ -251,7 +290,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// </summary>
         /// <param name="errorEvent"></param>
         /// <returns></returns>
-        protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
+        protected virtual Task HandleProcessErrorDefault(IErrorEvent errorEvent)
         {
             ProcessErrorEventArgs args = ErrorEvent.ParseArgs(errorEvent);
 

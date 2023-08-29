@@ -10,6 +10,7 @@ using AsyncProcessor.Formatters;
 using AsyncProcessor.Confluent.Kafka.Configuration;
 using AsyncProcessor.Confluent.Kafka.Services;
 using static AsyncProcessor.Confluent.Kafka.Services.ProcessService;
+using AsyncProcessor.Asserts;
 
 namespace AsyncProcessor.Confluent.Kafka
 {
@@ -30,6 +31,9 @@ namespace AsyncProcessor.Confluent.Kafka
         private readonly ConsumerSettings _settings;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IConsumer<Ignore, string> _client;
+
+        private Func<IMessageEvent, Task> _processMessage;
+        private Func<IErrorEvent, Task> _processError;
 
 
         public Consumer(ILogger<Consumer<TMessage>> logger,
@@ -54,14 +58,50 @@ namespace AsyncProcessor.Confluent.Kafka
             this._client = CreateClient(settings);
 
             // Set Default Delegate, just in case
-            this.ProcessError = this.ProcessErrorDefault;
+            // this.ProcessError += this.HandleProcessErrorDefault;
         }
 
 
         #region Consumer
-        public Func<IMessageEvent, Task> ProcessMessage { get; set; }
+        public event Func<IMessageEvent, Task> ProcessMessage
+        {
+            add
+            {
+                Argument.AssertNotNull(value, nameof(ProcessMessage));
+                Argument.AssertEventHandlerNotAssigned(this._processMessage, default, nameof(ProcessMessage));
 
-        public Func<IErrorEvent, Task> ProcessError { get; set; }
+                this._processMessage = value;
+            }
+
+            remove
+            {
+                Argument.AssertNotNull(value, nameof(ProcessMessage));
+                Argument.AssertSameEventHandlerAssigned(this._processMessage, value, nameof(ProcessMessage));
+
+                this._processMessage = default;
+            }
+        }
+
+
+        public event Func<IErrorEvent, Task> ProcessError
+        {
+            add
+            {
+                Argument.AssertNotNull(value, nameof(ProcessError));
+                Argument.AssertEventHandlerNotAssigned(this._processError, default, nameof(ProcessError));
+
+                this._processError = value;
+            }
+
+            remove
+            {
+                Argument.AssertNotNull(value, nameof(ProcessError));
+                Argument.AssertSameEventHandlerAssigned(this._processError, value, nameof(ProcessError));
+
+                this._processError = default;
+            }
+        }
+
 
         public TMessage GetMessage(IMessageEvent messageEvent)
         {
@@ -151,8 +191,8 @@ namespace AsyncProcessor.Confluent.Kafka
                 if (disposing)
                 {
                     this.Detach().GetAwaiter().GetResult();
-                    this.ProcessMessage = null;
-                    this.ProcessError = null;
+                    this._processMessage = default;
+                    this._processError = default;
                     this._client.Dispose();
                 }
 
@@ -187,17 +227,17 @@ namespace AsyncProcessor.Confluent.Kafka
 
         private async Task HandleClientProcessEvent(ConsumeResult<Ignore, string> result)
         {
-            if (ProcessMessage != null)
+            if (this._processMessage != default)
             {
-                await ProcessMessage(new MessageEvent(result));
+                await this._processMessage(new MessageEvent(result));
             }
         }
 
         private async Task HandleClientProcessError(Error error)
         {
-            if (ProcessError != null)
+            if (this._processError != default)
             {
-                await ProcessError(new ErrorEvent(this._client, error));
+                await this._processError(new ErrorEvent(this._client, error));
             }
         }
 
@@ -206,7 +246,7 @@ namespace AsyncProcessor.Confluent.Kafka
         /// </summary>
         /// <param name="errorEvent"></param>
         /// <returns></returns>
-        protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
+        protected virtual Task HandleProcessErrorDefault(IErrorEvent errorEvent)
         {
             this._logger.LogError(errorEvent.Exception, "Error while processing message on Topic: {0}", this.SubscribedTo);
             return Task.CompletedTask;

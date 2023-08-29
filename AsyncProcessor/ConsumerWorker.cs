@@ -27,8 +27,8 @@ namespace AsyncProcessor
             this._consumer = consumer ??
                 throw new ArgumentNullException(nameof(consumer));
 
-            this.Consumer.ProcessMessage = this.ExecuteProcessMessage;
-            // this.Consumer.ProcessError = this.ExecuteProcessError;
+            this.Consumer.ProcessMessage += this.HandleProcessMessage;
+            this.Consumer.ProcessError += this.HandleProcessError;
         }
 
         #region Abstraction Definitions
@@ -94,7 +94,7 @@ namespace AsyncProcessor
         /// </summary>
         /// <param name="messageEvent"></param>
         /// <returns></returns>
-        protected virtual async Task ExecuteProcessMessage(IMessageEvent messageEvent)
+        protected virtual async Task HandleProcessMessage(IMessageEvent messageEvent)
         {
             try
             {
@@ -130,7 +130,7 @@ namespace AsyncProcessor
         /// </summary>
         /// <param name="messageEvent"></param>
         /// <returns></returns>
-        protected virtual Task ExecuteProcessError(IErrorEvent errorEvent)
+        protected virtual Task HandleProcessError(IErrorEvent errorEvent)
         {
             try
             {

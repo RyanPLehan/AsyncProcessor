@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncProcessor.Asserts;
 
 namespace AsyncProcessor.Confluent.Kafka.Services
 {
@@ -34,17 +35,57 @@ namespace AsyncProcessor.Confluent.Kafka.Services
         private bool _cancel = false;
         private readonly ILogger _logger;
 
+        private Func<ConsumeResult<Ignore, string>, Task> _processEvent;
+        private Func<Error, Task> _processError;
+
+
         public ProcessService(ILogger<ProcessService> logger)
         {
             this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));
         }
 
-        public Func<ConsumeResult<Ignore, string>, Task> ProcessEvent { get; set; }
-        public Func<Error, Task> ProcessError { get; set; }
+        public event Func<ConsumeResult<Ignore, string>, Task> ProcessEvent
+        {
+            add
+            {
+                Argument.AssertNotNull(value, nameof(ProcessEvent));
+                Argument.AssertEventHandlerNotAssigned(this._processEvent, default, nameof(ProcessEvent));
+
+                this._processEvent = value;
+            }
+
+            remove
+            {
+                Argument.AssertNotNull(value, nameof(ProcessEvent));
+                Argument.AssertSameEventHandlerAssigned(this._processEvent, value, nameof(ProcessEvent));
+
+                this._processEvent = default;
+            }
+        }
 
 
-        public async Task StartConsumeEvents(IConsumer<Ignore, string> client, CancellationToken cancellationToken)
+        public event Func<Error, Task> ProcessError
+        {
+            add
+            {
+                Argument.AssertNotNull(value, nameof(ProcessError));
+                Argument.AssertEventHandlerNotAssigned(this._processError, default, nameof(ProcessError));
+
+                this._processError = value;
+            }
+
+            remove
+            {
+                Argument.AssertNotNull(value, nameof(ProcessError));
+                Argument.AssertSameEventHandlerAssigned(this._processError, value, nameof(ProcessError));
+
+                this._processError = default;
+            }
+        }
+
+
+    public async Task StartConsumeEvents(IConsumer<Ignore, string> client, CancellationToken cancellationToken)
         {
             this._cancel = false;
             ConsumeResult<Ignore, string> result = null;
@@ -92,8 +133,8 @@ namespace AsyncProcessor.Confluent.Kafka.Services
         {
             try
             {
-                if (ProcessEvent != null)
-                    await ProcessEvent(result);
+                if (this._processEvent != default)
+                    await this._processEvent(result);
             }
             catch
             { }
@@ -103,8 +144,8 @@ namespace AsyncProcessor.Confluent.Kafka.Services
         {
             try
             {
-                if (ProcessError != null)
-                    await ProcessError(error);
+                if (this._processError != default)
+                    await this._processError(error);
             }
             catch
             { }

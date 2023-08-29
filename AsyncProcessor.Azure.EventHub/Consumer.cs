@@ -9,6 +9,8 @@ using Microsoft.Extensions.Options;
 using AsyncProcessor;
 using AsyncProcessor.Formatters;
 using AsyncProcessor.Azure.EventHub.Configuration;
+using AsyncProcessor.Asserts;
+using Microsoft.Azure.Amqp.Framing;
 
 // TODO: Add timer to update checkpoint
 // TODO: Enable/Disable timer
@@ -50,6 +52,9 @@ namespace AsyncProcessor.Azure.EventHub
         private readonly EventProcessorClient _client;
         private readonly System.Timers.Timer _timer;
 
+        private Func<IMessageEvent, Task> _processMessage;
+        private Func<IErrorEvent, Task> _processError;
+
 
         public Consumer(ILogger<Consumer<TMessage>> logger,
                         IOptions<ConsumerSettings> settings)
@@ -70,14 +75,50 @@ namespace AsyncProcessor.Azure.EventHub
 
 
             // Set Default Delegate, just in case
-            this.ProcessError = this.ProcessErrorDefault;
+            // this.ProcessError += this.HandleProcessErrorDefault;
         }
 
 
         #region Consumer
-        public Func<IMessageEvent, Task> ProcessMessage { get; set; }
+        public event Func<IMessageEvent, Task> ProcessMessage
+        {
+            add
+            {
+                Argument.AssertNotNull(value, nameof(ProcessMessage));
+                Argument.AssertEventHandlerNotAssigned(this._processMessage, default, nameof(ProcessMessage));
 
-        public Func<IErrorEvent, Task> ProcessError { get; set; }
+                this._processMessage = value;
+            }
+
+            remove
+            {
+                Argument.AssertNotNull(value, nameof(ProcessMessage));
+                Argument.AssertSameEventHandlerAssigned(this._processMessage, value, nameof(ProcessMessage));
+
+                this._processMessage = default;
+            }
+        }
+
+
+        public event Func<IErrorEvent, Task> ProcessError
+        {
+            add
+            {
+                Argument.AssertNotNull(value, nameof(ProcessError));
+                Argument.AssertEventHandlerNotAssigned(this._processError, default, nameof(ProcessError));
+
+                this._processError = value;
+            }
+
+            remove
+            {
+                Argument.AssertNotNull(value, nameof(ProcessError));
+                Argument.AssertSameEventHandlerAssigned(this._processError, value, nameof(ProcessError));
+
+                this._processError = default;
+            }
+        }
+
 
         public TMessage GetMessage(IMessageEvent messageEvent)
         {
@@ -163,8 +204,8 @@ namespace AsyncProcessor.Azure.EventHub
                 if (disposing)
                 {
                     this.Detach().GetAwaiter().GetResult();
-                    this.ProcessMessage = null;
-                    this.ProcessError = null;
+                    this._processMessage = default;
+                    this._processError = default;
                 }
 
                 _disposedValue = true;
@@ -220,24 +261,23 @@ namespace AsyncProcessor.Azure.EventHub
         }
 
 
-
         private async Task HandleClientProcessEvent(ProcessEventArgs processEventArgs)
         {
-            if (ProcessMessage != null)
+            if (this._processMessage != default)
             {
                 if (!this._timer.Enabled)
                     this._timer.Start();
 
                 this._lastEventArgs = processEventArgs;
-                await ProcessMessage(new MessageEvent(processEventArgs));
+                await this._processMessage(new MessageEvent(processEventArgs));
             }
         }
 
         private async Task HandleClientProcessError(ProcessErrorEventArgs processErrorEventArgs)
         {
-            if (ProcessError != null)
+            if (this._processError != default)
             {
-                await ProcessError(new ErrorEvent(processErrorEventArgs));
+                await this._processError(new ErrorEvent(processErrorEventArgs));
             }
         }
 
@@ -246,7 +286,7 @@ namespace AsyncProcessor.Azure.EventHub
         /// </summary>
         /// <param name="errorEvent"></param>
         /// <returns></returns>
-        protected virtual Task ProcessErrorDefault(IErrorEvent errorEvent)
+        protected virtual Task HandleProcessErrorDefault(IErrorEvent errorEvent)
         {
             this._logger.LogError(errorEvent.Exception, "Error while processing message on Event Hub: {0}", this._subscribedTo);
             return Task.CompletedTask;
