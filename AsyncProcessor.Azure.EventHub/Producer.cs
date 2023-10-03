@@ -136,11 +136,11 @@ namespace AsyncProcessor.Azure.EventHub
         }
 
 
-        private IEnumerable<EventData> CreateEventData<T>(IEnumerable<T> messages)
+        private IEnumerable<EventData> CreateEventData(IEnumerable<TMessage> messages)
         {
             IList<EventData> eventData = new List<EventData>();
 
-            foreach (T message in messages)
+            foreach (TMessage message in messages)
                 eventData.Add(new EventData(Json.Serialize(message)));
 
             return eventData;
