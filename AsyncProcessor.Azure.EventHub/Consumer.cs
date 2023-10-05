@@ -11,6 +11,7 @@ using AsyncProcessor.Formatters;
 using AsyncProcessor.Azure.EventHub.Configuration;
 using AsyncProcessor.Asserts;
 using Microsoft.Azure.Amqp.Framing;
+using System.Runtime;
 
 // TODO: Add timer to update checkpoint
 // TODO: Enable/Disable timer
@@ -46,10 +47,10 @@ namespace AsyncProcessor.Azure.EventHub
         private bool _disposedValue = false;
         private string _subscribedTo = null;
         private ProcessEventArgs _lastEventArgs;
+        private EventProcessorClient _client;
 
         private readonly ILogger _logger;
         private readonly ConsumerSettings _settings;
-        private readonly EventProcessorClient _client;
         private readonly System.Timers.Timer _timer;
 
         private Func<IMessageEvent, Task> _processMessage;
@@ -70,9 +71,7 @@ namespace AsyncProcessor.Azure.EventHub
             this._settings = settings ??
                 throw new ArgumentNullException(nameof(settings));
 
-            this._client = CreateClient(settings);
             this._timer = CreateTimer(settings.CheckpointStore.CheckpointIntervalInSeconds);
-
 
             // Set Default Delegate, just in case
             // this.ProcessError += this.HandleProcessErrorDefault;
@@ -135,11 +134,9 @@ namespace AsyncProcessor.Azure.EventHub
         #region Subscription Management
         public async Task Attach(string topic, CancellationToken cancellationToken = default)
         {
-            // Ensure that topic is the same as the event hub, if supplied.
-            if (!String.IsNullOrWhiteSpace(topic) &&
-                !this._client.EventHubName.Equals(topic.Trim(), StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("When topic is supplied, it must match Azure Event Hub name");
+            Argument.AssertNotEmptyOrWhiteSpace(topic, nameof(topic));
 
+            this._client = CreateClient(this._settings, topic);
             this._client.ProcessEventAsync += this.HandleClientProcessEvent;
             this._client.ProcessErrorAsync += this.HandleClientProcessError;
             this._subscribedTo = topic;
@@ -225,21 +222,15 @@ namespace AsyncProcessor.Azure.EventHub
         /// </remarks>
         /// <param name="settings"></param>
         /// <returns></returns>
-        private EventProcessorClient CreateClient(ConsumerSettings settings)
+        private EventProcessorClient CreateClient(ConsumerSettings settings, string topic)
         {
             EventProcessorClient client = null;
 
             var storageClient = CreateStorageClient(settings.CheckpointStore);
-
-            if (String.IsNullOrWhiteSpace(this._settings.EventHub))
-                client = new EventProcessorClient(storageClient,
-                                                  this._settings.ConsumerGroup,
-                                                  this._settings.ConnectionString);
-            else
-                client = new EventProcessorClient(storageClient,
-                                                  this._settings.ConsumerGroup,
-                                                  this._settings.ConnectionString,
-                                                  this._settings.EventHub);
+            client = new EventProcessorClient(storageClient,
+                                              settings.ConsumerGroup,
+                                              settings.ConnectionString,
+                                              topic);
 
             return client;
         }

@@ -112,6 +112,9 @@ namespace AsyncProcessor.Azure.ServiceBus
         #region Subscription Management
         public async Task Attach(string topic, CancellationToken cancellationToken = default)
         {
+
+            Argument.AssertNotEmptyOrWhiteSpace(topic, nameof(topic));
+
             if (this._receiver == null ||
                 this._receiver.IsClosed)
             {
@@ -126,6 +129,8 @@ namespace AsyncProcessor.Azure.ServiceBus
 
         public async Task Attach(string topic, string subscription, CancellationToken cancellationToken = default)
         {
+            Argument.AssertNotEmptyOrWhiteSpace(topic, nameof(topic));
+
             if (this._receiver == null ||
                 this._receiver.IsClosed)
             {
@@ -242,7 +247,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// <returns></returns>
         private ServiceBusClient CreateClient(ConnectionSettings settings)
         {
-            return new ServiceBusClient(this._settings.ConnectionString);
+            return new ServiceBusClient(settings.ConnectionString);
         }
 
 

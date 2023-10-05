@@ -122,7 +122,7 @@ namespace AsyncProcessor.Azure.ServiceBus
         /// <returns></returns>
         private ServiceBusClient CreateClient(ConnectionSettings settings)
         {
-            return new ServiceBusClient(this._settings.ConnectionString);
+            return new ServiceBusClient(settings.ConnectionString);
         }
 
 

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using AsyncProcessor;
 using AsyncProcessor.Formatters;
 using AsyncProcessor.Confluent.Kafka.Configuration;
+using AsyncProcessor.Asserts;
 
 namespace AsyncProcessor.Confluent.Kafka
 {
@@ -72,6 +73,8 @@ namespace AsyncProcessor.Confluent.Kafka
         {
             if (this._disposedValue)
                 throw new ObjectDisposedException(nameof(Producer<TMessage>));
+
+            Argument.AssertNotEmptyOrWhiteSpace(topic, nameof(topic));
 
             if (!messages.Any())
                 return;

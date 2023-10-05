@@ -6,7 +6,8 @@ namespace AsyncProcessor.Azure.EventHub.Configuration
     public class ConnectionSettings
     {
         /// <summary>
-        /// Event Hubs connection string
+        /// Event Hubs connection string.
+        /// This connection string should be at the event hubs level not at the specific event hub
         /// </summary>
         /// <remarks>
         /// If the connection string does not contain the Event Hub name, then use the supplied EventHub property
@@ -22,6 +23,6 @@ namespace AsyncProcessor.Azure.EventHub.Configuration
         /// See: https://learn.microsoft.com/en-us/dotnet/api/azure.messaging.eventhubs.consumer.eventhubconsumerclient.-ctor?view=azure-dotnet#azure-messaging-eventhubs-consumer-eventhubconsumerclient-ctor(system-string-system-string)
         /// See: https://learn.microsoft.com/en-us/dotnet/api/azure.messaging.eventhubs.producer.eventhubproducerclient.-ctor?view=azure-dotnet#azure-messaging-eventhubs-producer-eventhubproducerclient-ctor(system-string-system-string)
         /// </remarks>
-        public string EventHub { get; set; }
+        //public string EventHub { get; set; }
     }
 }

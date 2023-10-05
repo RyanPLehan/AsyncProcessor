@@ -118,6 +118,8 @@ namespace AsyncProcessor.Confluent.Kafka
         #region Subscription Management
         public async Task Attach(string topic, CancellationToken cancellationToken = default)
         {
+            Argument.AssertNotEmptyOrWhiteSpace(topic, nameof(topic));
+
             this._client.Subscribe(topic);
             this.SubscribedTo = topic;
             await Resume(cancellationToken);

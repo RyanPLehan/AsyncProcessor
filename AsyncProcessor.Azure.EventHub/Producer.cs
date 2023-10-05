@@ -4,10 +4,12 @@ using Azure.Messaging.EventHubs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AsyncProcessor;
+using AsyncProcessor.Asserts;
 using AsyncProcessor.Formatters;
 using AsyncProcessor.Azure.EventHub.Configuration;
 using Azure.Messaging.EventHubs.Producer;
 using System.Collections.Concurrent;
+using System.Reflection.Metadata.Ecma335;
 
 namespace AsyncProcessor.Azure.EventHub
 {
@@ -21,7 +23,7 @@ namespace AsyncProcessor.Azure.EventHub
     {
         private readonly ILogger _logger;
         private readonly ProducerSettings _settings;
-        private readonly EventHubProducerClient _client;
+        private readonly IDictionary<string, EventHubProducerClient> _clients;
 
         private bool _disposedValue = false;
 
@@ -41,7 +43,7 @@ namespace AsyncProcessor.Azure.EventHub
             this._settings = settings ??
                 throw new ArgumentNullException(nameof(settings));
 
-            this._client = CreateClient(settings);
+            this._clients = new Dictionary<string, EventHubProducerClient>(StringComparer.OrdinalIgnoreCase);
         }
 
 
@@ -75,16 +77,22 @@ namespace AsyncProcessor.Azure.EventHub
             if (this._disposedValue)
                 throw new ObjectDisposedException(nameof(Producer<TMessage>));
 
+            Argument.AssertNotEmptyOrWhiteSpace(topic, nameof(topic));
+
             if (!messages.Any())
                 return;
 
-            // Ensure that topic is the same as the event hub, if supplied.
-            if (!String.IsNullOrWhiteSpace(topic) &&
-                !this._client.EventHubName.Equals(topic.Trim(), StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("When topic is supplied, it must match Azure Event Hub name");
+            EventHubProducerClient client = null;
+            if (!this._clients.TryGetValue(topic, out client) ||
+                client.IsClosed)
+            {
+                this._clients.Remove(topic);
+                client = CreateClient(this._settings, topic);
+                this._clients.Add(topic, client);
+            }
 
             var eventData = CreateEventData(messages);
-            await this._client.SendAsync(eventData, cancellationToken);
+            await client.SendAsync(eventData, cancellationToken);
         }
 
 
@@ -103,7 +111,8 @@ namespace AsyncProcessor.Azure.EventHub
             {
                 if (disposing)
                 {
-                    this._client.DisposeAsync().GetAwaiter().GetResult();
+                    foreach(KeyValuePair<string, EventHubProducerClient> kvp in this._clients)
+                        kvp.Value.DisposeAsync().GetAwaiter().GetResult();
                 }
 
                 _disposedValue = true;
@@ -122,17 +131,10 @@ namespace AsyncProcessor.Azure.EventHub
         /// </remarks>
         /// <param name="settings"></param>
         /// <returns></returns>
-        private EventHubProducerClient CreateClient(ConnectionSettings settings)
+        private EventHubProducerClient CreateClient(ConnectionSettings settings, string topic)
         {
-            EventHubProducerClient client = null;
-
-            if (String.IsNullOrWhiteSpace(this._settings.EventHub))
-                client = new EventHubProducerClient(this._settings.ConnectionString);
-            else
-                client = new EventHubProducerClient(this._settings.ConnectionString,
-                                                    this._settings.EventHub);
-
-            return client;
+            return new EventHubProducerClient(settings.ConnectionString,
+                                              topic);
         }
 
 
