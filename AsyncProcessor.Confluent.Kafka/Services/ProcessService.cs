@@ -24,7 +24,8 @@ namespace AsyncProcessor.Confluent.Kafka.Services
     /// Examples of consuming events in Kafka
     /// https://docs.confluent.io/kafka-clients/dotnet/current/overview.html#auto-offset-commit
     /// https://developer.confluent.io/get-started/dotnet/?utm_medium=sem&utm_source=google&utm_campaign=ch.sem_br.nonbrand_tp.prs_tgt.dsa_mt.dsa_rgn.namer_lng.eng_dv.all_con.confluent-developer&utm_term=&creative=&device=c&placement=&gad=1&gclid=EAIaIQobChMI6rjf0_qsgAMV7MnjBx2m1gBrEAAYASAAEgKCTPD_BwE#build-consumer
-    ///
+    /// https://github.com/Azure/azure-event-hubs-for-kafka/blob/master/quickstart/dotnet/EventHubsForKafkaSample/Worker.cs
+    /// 
     /// Regarding Commits..
     /// Commits are by default handled automatically.
     /// There is a way to disable the auto-commit functionality via configuration.  This app does not control nor look for that setting.
@@ -85,7 +86,7 @@ namespace AsyncProcessor.Confluent.Kafka.Services
         }
 
 
-    public async Task StartConsumeEvents(IConsumer<Ignore, string> client, CancellationToken cancellationToken)
+        public async Task StartConsumeEvents(IConsumer<Ignore, string> client, CancellationToken cancellationToken)
         {
             this._cancel = false;
             ConsumeResult<Ignore, string> result = null;
